@@ -281,7 +281,7 @@ export function filterArray(rows, options) {
     }
     catch (error) {
         // If filter parsing fails, return all rows
-        // eslint-disable-next-line no-console, no-undef
+        // eslint-disable-next-line no-undef
         console.warn('Filter parsing failed:', error);
         return rows;
     }

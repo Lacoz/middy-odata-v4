@@ -12,7 +12,11 @@ export function queryWithConformance(data, options) {
             return null;
         }
         // Apply conformance-level appropriate transformations
-        return applyConformanceToEntity(entity, conformance, queryOptions);
+        const transformedEntity = applyConformanceToEntity(entity, conformance, queryOptions);
+        return {
+            value: transformedEntity,
+            "@odata.context": "$metadata#Products"
+        };
     }
     // Handle collection access
     let result = [...data];

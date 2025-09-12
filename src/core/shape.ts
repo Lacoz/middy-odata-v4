@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ODataEntity, ODataQueryOptions } from "./types";
 
 export function applySelect<T extends ODataEntity>(row: T, select?: string[]): Partial<T> {

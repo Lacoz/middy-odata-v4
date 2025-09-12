@@ -22,8 +22,9 @@ describe("OData v4.01 Conformance Levels", () => {
         conformance: "minimal",
         key: 1
       });
-      expect(result).toHaveProperty("id");
-      expect((result as any).id).toBe(1);
+      expect(result).toHaveProperty("value");
+      expect((result as any).value).toHaveProperty("id");
+      expect((result as any).value.id).toBe(1);
     });
 
     it("should support service document", () => {

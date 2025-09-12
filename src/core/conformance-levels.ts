@@ -22,21 +22,31 @@ export interface ConformanceOptions {
   apply?: string;
 }
 
+export interface ConformanceResponse<T> {
+  value: T | T[];
+  "@odata.context"?: string;
+  "@odata.count"?: number;
+}
+
 export function queryWithConformance<T extends ODataEntity>(
   data: T[],
   options: ConformanceOptions
-): any {
+): ConformanceResponse<T> | null {
   const { conformance, key, ...queryOptions } = options;
   
   // Handle single entity access by key
   if (key !== undefined) {
-    const entity = data.find(item => (item as any).id === key);
+    const entity = data.find(item => (item as Record<string, unknown>).id === key);
     if (!entity) {
       return null;
     }
     
     // Apply conformance-level appropriate transformations
-    return applyConformanceToEntity(entity, conformance, queryOptions);
+    const transformedEntity = applyConformanceToEntity(entity, conformance, queryOptions);
+    return {
+      value: transformedEntity,
+      "@odata.context": "$metadata#Products"
+    };
   }
   
   // Handle collection access
@@ -56,25 +66,25 @@ function applyConformanceToEntity<T extends ODataEntity>(
   entity: T,
   conformance: ConformanceLevel,
   options: Partial<ConformanceOptions>
-): any {
-  let result = { ...entity };
+): T {
+  let result: Record<string, unknown> = { ...entity };
   
   if (conformance === "minimal") {
     // Minimal conformance - basic property access only
     if (options.select) {
       const selectedProps = options.select.reduce((acc, prop) => {
-        acc[prop] = (result as any)[prop];
+        acc[prop] = result[prop];
         return acc;
-      }, {} as any);
+      }, {} as Record<string, unknown>);
       result = selectedProps;
     }
   } else if (conformance === "intermediate") {
     // Intermediate conformance - support $select, $expand, $filter, $orderby, $top, $skip
     if (options.select) {
       const selectedProps = options.select.reduce((acc, prop) => {
-        acc[prop] = (result as any)[prop];
+        acc[prop] = result[prop];
         return acc;
-      }, {} as any);
+      }, {} as Record<string, unknown>);
       result = selectedProps;
     }
     
@@ -96,7 +106,7 @@ function applyConformanceToEntity<T extends ODataEntity>(
     }
   }
   
-  return result;
+  return result as T;
 }
 
 function applyConformanceToCollection<T extends ODataEntity>(
@@ -111,10 +121,10 @@ function applyConformanceToCollection<T extends ODataEntity>(
     if (options.select) {
       result = result.map(item => {
         const selectedProps = options.select!.reduce((acc, prop) => {
-          acc[prop] = (item as any)[prop];
+          acc[prop] = (item as Record<string, unknown>)[prop];
           return acc;
-        }, {} as any);
-        return selectedProps;
+        }, {} as Record<string, unknown>);
+        return selectedProps as T;
       });
     }
     // Minimal conformance doesn't support pagination, filtering, ordering, etc.
@@ -185,7 +195,7 @@ function applyConformanceToCollection<T extends ODataEntity>(
   return result;
 }
 
-export function getServiceDocument(options: { conformance: ConformanceLevel }): any {
+export function getServiceDocument(options: { conformance: ConformanceLevel }): Record<string, unknown> {
   const serviceDoc = generateServiceDocument(EDM_MODEL, "https://api.example.com");
   
   // Add conformance level information
@@ -194,7 +204,7 @@ export function getServiceDocument(options: { conformance: ConformanceLevel }): 
   return serviceDoc;
 }
 
-export function getMetadataDocument(options: { conformance: ConformanceLevel }): any {
+export function getMetadataDocument(options: { conformance: ConformanceLevel }): Record<string, unknown> {
   const metadata = generateMetadata(EDM_MODEL, "https://api.example.com");
   
   // Add conformance level information

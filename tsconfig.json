@@ -12,5 +12,6 @@
     "forceConsistentCasingInFileNames": true,
     "types": ["vitest/globals"]
   },
-  "include": ["src", "__tests__", "*.ts"]
+  "include": ["src", "*.ts"],
+  "exclude": ["__tests__", "dist", "node_modules"]
 }

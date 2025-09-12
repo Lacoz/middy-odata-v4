@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ODataEntity } from "./types";
 
 // Simple CRUD operations implementation

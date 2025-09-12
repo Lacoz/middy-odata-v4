@@ -87,8 +87,66 @@ export function serializeToXml(data, options = {}) {
     return xml;
 }
 export function serializeToAtom(data, options = {}) {
-    // Atom format is similar to XML but with specific Atom feed structure
-    return serializeToXml(data, options);
+    const { serviceRoot = "https://api.example.com/odata", metadata = "minimal" } = options;
+    const isCollection = Array.isArray(data);
+    let xml = '<?xml version="1.0" encoding="utf-8"?>\n';
+    if (isCollection) {
+        xml += `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:d="http://schemas.microsoft.com/ado/2007/08/dataservices" xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata">\n`;
+        // Add feed metadata
+        xml += `  <updated>${new Date().toISOString()}</updated>\n`;
+        xml += `  <author>\n`;
+        xml += `    <name>OData Service</name>\n`;
+        xml += `  </author>\n`;
+        if (metadata !== "none") {
+            xml += `  <m:count>${data.length}</m:count>\n`;
+        }
+        data.forEach(item => {
+            xml += `  <entry>\n`;
+            xml += `    <id>${serviceRoot}/Products(${item.id})</id>\n`;
+            xml += `    <title type="text">${item.name}</title>\n`;
+            xml += `    <updated>${new Date().toISOString()}</updated>\n`;
+            xml += `    <author>\n`;
+            xml += `      <name>OData Service</name>\n`;
+            xml += `    </author>\n`;
+            xml += `    <content type="application/xml">\n`;
+            xml += `      <m:properties>\n`;
+            xml += `        <d:Id>${item.id}</d:Id>\n`;
+            xml += `        <d:Name>${item.name}</d:Name>\n`;
+            if ('price' in item) {
+                xml += `        <d:Price>${item.price}</d:Price>\n`;
+            }
+            if ('categoryId' in item) {
+                xml += `        <d:CategoryId>${item.categoryId}</d:CategoryId>\n`;
+            }
+            xml += `      </m:properties>\n`;
+            xml += `    </content>\n`;
+            xml += `  </entry>\n`;
+        });
+        xml += `</feed>`;
+    }
+    else {
+        xml += `<entry xmlns="http://www.w3.org/2005/Atom" xmlns:d="http://schemas.microsoft.com/ado/2007/08/dataservices" xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata">\n`;
+        xml += `  <id>${serviceRoot}/Products(${data.id})</id>\n`;
+        xml += `  <title type="text">${data.name}</title>\n`;
+        xml += `  <updated>${new Date().toISOString()}</updated>\n`;
+        xml += `  <author>\n`;
+        xml += `    <name>OData Service</name>\n`;
+        xml += `  </author>\n`;
+        xml += `  <content type="application/xml">\n`;
+        xml += `    <m:properties>\n`;
+        xml += `      <d:Id>${data.id}</d:Id>\n`;
+        xml += `      <d:Name>${data.name}</d:Name>\n`;
+        if ('price' in data) {
+            xml += `      <d:Price>${data.price}</d:Price>\n`;
+        }
+        if ('categoryId' in data) {
+            xml += `      <d:CategoryId>${data.categoryId}</d:CategoryId>\n`;
+        }
+        xml += `    </m:properties>\n`;
+        xml += `  </content>\n`;
+        xml += `</entry>`;
+    }
+    return xml;
 }
 export function serializeToCsv(data, options = {}) {
     if (!Array.isArray(data) || data.length === 0) {

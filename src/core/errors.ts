@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ODataErrorPayload, EdmModel } from "./types";
 
 export class ODataBadRequest extends Error {

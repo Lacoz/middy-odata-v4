@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ODataEntity, ODataQueryOptions } from "./types";
 
 // Simple filter expression parser and evaluator
@@ -336,7 +337,7 @@ export function filterArray<T extends ODataEntity>(rows: T[], options: ODataQuer
     return rows.filter(row => evaluateExpression(expression, row));
   } catch (error) {
     // If filter parsing fails, return all rows
-    // eslint-disable-next-line no-console, no-undef
+    // eslint-disable-next-line no-undef
     console.warn('Filter parsing failed:', error);
     return rows;
   }

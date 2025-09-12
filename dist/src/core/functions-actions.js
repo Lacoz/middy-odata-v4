@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // import type { ODataEntity } from "./types";
 // Function registry for unbound functions
 const functionRegistry = new Map();
@@ -29,7 +30,7 @@ functionRegistry.set("calculateShipping", (params) => {
         "default": 9.99
     };
     return {
-        value: shippingRates[address?.zipCode] || shippingRates.default
+        value: shippingRates[address?.zipCode || 'default'] || shippingRates.default
     };
 });
 functionRegistry.set("calculateBulkDiscount", (params) => {

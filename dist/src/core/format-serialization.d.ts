@@ -17,8 +17,8 @@ export interface SerializedResponse {
     "@odata.nextLink"?: string;
     "@odata.deltaLink"?: string;
     "@odata.metadataEtag"?: string;
-    value?: any;
-    [key: string]: any;
+    value?: ODataEntity | ODataEntity[];
+    [key: string]: unknown;
 }
 export declare function serializeToJson(data: ODataEntity | ODataEntity[], options?: SerializationOptions): SerializedResponse;
 export declare function serializeToXml(data: ODataEntity | ODataEntity[], options?: SerializationOptions): string;

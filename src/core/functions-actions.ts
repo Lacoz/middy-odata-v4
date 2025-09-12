@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // import type { ODataEntity } from "./types";
 
 export interface FunctionParameter {
@@ -41,8 +42,8 @@ const functionRegistry = new Map<string, (params: Record<string, unknown>) => Fu
 const actionRegistry = new Map<string, (params: Record<string, unknown>) => ActionResult>();
 
 // Register built-in functions
-functionRegistry.set("getProductsByCategory", (params: any) => {
-  const { categoryId, minPrice = 0 } = params;
+functionRegistry.set("getProductsByCategory", (params: Record<string, unknown>) => {
+  const { categoryId, minPrice = 0 } = params as { categoryId: number; minPrice?: number };
   // Mock implementation - in real scenario would query database
   return {
     value: [
@@ -52,15 +53,15 @@ functionRegistry.set("getProductsByCategory", (params: any) => {
   };
 });
 
-functionRegistry.set("calculatePrice", (params: any) => {
-  const { basePrice, discount = 0 } = params;
+functionRegistry.set("calculatePrice", (params: Record<string, unknown>) => {
+  const { basePrice, discount = 0 } = params as { basePrice: number; discount?: number };
   return {
     value: basePrice * (1 - discount)
   };
 });
 
-functionRegistry.set("calculateShipping", (params: any) => {
-  const { address } = params;
+functionRegistry.set("calculateShipping", (params: Record<string, unknown>) => {
+  const { address } = params as { address: { zipCode?: string } };
   // Mock shipping calculation based on zip code
   const shippingRates: Record<string, number> = {
     "10001": 5.99,
@@ -68,7 +69,7 @@ functionRegistry.set("calculateShipping", (params: any) => {
     "default": 9.99
   };
   return {
-    value: shippingRates[address?.zipCode] || shippingRates.default
+    value: shippingRates[address?.zipCode || 'default'] || shippingRates.default
   };
 });
 
@@ -82,8 +83,8 @@ functionRegistry.set("calculateBulkDiscount", (params: Record<string, unknown>) 
   };
 });
 
-functionRegistry.set("getRelatedProducts", (params: any) => {
-  const { maxCount = 5 } = params;
+functionRegistry.set("getRelatedProducts", (params: Record<string, unknown>) => {
+  const { maxCount = 5 } = params as { maxCount?: number };
   // Mock related products
   return {
     value: [
@@ -93,8 +94,8 @@ functionRegistry.set("getRelatedProducts", (params: any) => {
   };
 });
 
-functionRegistry.set("searchProducts", (params: any) => {
-  const { query, categoryId, minPrice, maxPrice } = params;
+functionRegistry.set("searchProducts", (params: Record<string, unknown>) => {
+  const { query, categoryId, minPrice, maxPrice } = params as { query?: string; categoryId?: number; minPrice?: number; maxPrice?: number };
   // Mock search implementation
   return {
     value: [

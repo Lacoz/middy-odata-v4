@@ -14,13 +14,18 @@ export interface ConformanceOptions {
     compute?: string[];
     apply?: string;
 }
-export declare function queryWithConformance<T extends ODataEntity>(data: T[], options: ConformanceOptions): any;
+export interface ConformanceResponse<T> {
+    value: T | T[];
+    "@odata.context"?: string;
+    "@odata.count"?: number;
+}
+export declare function queryWithConformance<T extends ODataEntity>(data: T[], options: ConformanceOptions): ConformanceResponse<T> | null;
 export declare function getServiceDocument(options: {
     conformance: ConformanceLevel;
-}): any;
+}): Record<string, unknown>;
 export declare function getMetadataDocument(options: {
     conformance: ConformanceLevel;
-}): any;
+}): Record<string, unknown>;
 export declare function validateConformanceLevel(level: string): ConformanceLevel;
 export declare function getSupportedQueryOptions(conformance: ConformanceLevel): string[];
 export declare function checkQueryOptionSupport(queryOption: string, conformance: ConformanceLevel): boolean;
