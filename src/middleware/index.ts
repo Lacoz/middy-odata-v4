@@ -20,7 +20,7 @@ export function odata(options: ODataMiddlewareOptions): MiddlewareObj {
   return {
     before: async (request: any) => {
       const event = request.event ?? {};
-      const query = event.rawQueryString
+      const query: Record<string, string> = event.rawQueryString
         ? Object.fromEntries(new URLSearchParams(event.rawQueryString))
         : (event.queryStringParameters || {});
       const opts: ODataQueryOptions = parseODataQuery(query);
