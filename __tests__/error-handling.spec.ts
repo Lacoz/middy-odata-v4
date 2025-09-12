@@ -18,7 +18,19 @@ import {
   handleServiceUnavailable,
   handleNotImplemented,
   handleBadGateway,
-  handleInternalError
+  handleInternalError,
+  createEntity,
+  processLargeData,
+  queryWithLimit,
+  queryWithDepth,
+  queryWithComplexity,
+  queryWithInjection,
+  queryWithXSS,
+  queryWithPathTraversal,
+  queryWithCSRF,
+  queryWithFallback,
+  queryWithRetry,
+  queryWithDegradation
 } from "../src/core/error-handling";
 
 describe("OData v4.01 Error Handling and Edge Cases", () => {
@@ -173,80 +185,58 @@ describe("OData v4.01 Error Handling and Edge Cases", () => {
 
   describe("Query Option Errors", () => {
     it("should handle invalid $filter syntax", () => {
-      // TODO: Implement query option error handling
-      // expect(() => parseODataQuery({ "$filter": "invalid syntax" }))
-      //   .toThrow("Invalid $filter syntax: 'invalid syntax'");
-      expect(true).toBe(true);
+      expect(() => validateQueryParameters({ "$filter": "invalid syntax" }))
+        .toThrow("Bad Request: Malformed query parameter '$filter'");
     });
 
     it("should handle invalid $orderby syntax", () => {
-      // TODO: Implement query option error handling
-      // expect(() => parseODataQuery({ "$orderby": "invalid orderby" }))
-      //   .toThrow("Invalid $orderby syntax: 'invalid orderby'");
-      expect(true).toBe(true);
+      expect(() => validateQueryParameters({ "$orderby": "invalid orderby" }))
+        .toThrow("Bad Request: Malformed query parameter '$orderby'");
     });
 
     it("should handle invalid $select syntax", () => {
-      // TODO: Implement query option error handling
-      // expect(() => parseODataQuery({ "$select": "invalid select" }))
-      //   .toThrow("Invalid $select syntax: 'invalid select'");
-      expect(true).toBe(true);
+      expect(() => validateQueryParameters({ "$select": "invalid select" }))
+        .toThrow("Bad Request: Malformed query parameter '$select'");
     });
 
     it("should handle invalid $expand syntax", () => {
-      // TODO: Implement query option error handling
-      // expect(() => parseODataQuery({ "$expand": "invalid expand" }))
-      //   .toThrow("Invalid $expand syntax: 'invalid expand'");
-      expect(true).toBe(true);
+      expect(() => validateQueryParameters({ "$expand": "invalid expand" }))
+        .toThrow("Bad Request: Malformed query parameter '$expand'");
     });
 
     it("should handle invalid $top value", () => {
-      // TODO: Implement query option error handling
-      // expect(() => parseODataQuery({ "$top": "invalid" }))
-      //   .toThrow("Invalid $top value: 'invalid'");
-      expect(true).toBe(true);
+      expect(() => validateQueryParameters({ "$top": "invalid" }))
+        .toThrow("Bad Request: Malformed query parameter '$top'");
     });
 
     it("should handle invalid $skip value", () => {
-      // TODO: Implement query option error handling
-      // expect(() => parseODataQuery({ "$skip": "invalid" }))
-      //   .toThrow("Invalid $skip value: 'invalid'");
-      expect(true).toBe(true);
+      expect(() => validateQueryParameters({ "$skip": "invalid" }))
+        .toThrow("Bad Request: Malformed query parameter '$skip'");
     });
 
     it("should handle invalid $count value", () => {
-      // TODO: Implement query option error handling
-      // expect(() => parseODataQuery({ "$count": "invalid" }))
-      //   .toThrow("Invalid $count value: 'invalid'");
-      expect(true).toBe(true);
+      expect(() => validateQueryParameters({ "$count": "invalid" }))
+        .toThrow("Bad Request: Malformed query parameter '$count'");
     });
 
     it("should handle invalid $search syntax", () => {
-      // TODO: Implement query option error handling
-      // expect(() => parseODataQuery({ "$search": "invalid search" }))
-      //   .toThrow("Invalid $search syntax: 'invalid search'");
-      expect(true).toBe(true);
+      expect(() => validateQueryParameters({ "$search": "invalid search" }))
+        .toThrow("Bad Request: Malformed query parameter '$search'");
     });
 
     it("should handle invalid $format value", () => {
-      // TODO: Implement query option error handling
-      // expect(() => parseODataQuery({ "$format": "invalid" }))
-      //   .toThrow("Invalid $format value: 'invalid'");
-      expect(true).toBe(true);
+      expect(() => validateQueryParameters({ "$format": "invalid" }))
+        .toThrow("Bad Request: Malformed query parameter '$format'");
     });
 
     it("should handle invalid $compute syntax", () => {
-      // TODO: Implement query option error handling
-      // expect(() => parseODataQuery({ "$compute": "invalid compute" }))
-      //   .toThrow("Invalid $compute syntax: 'invalid compute'");
-      expect(true).toBe(true);
+      expect(() => validateQueryParameters({ "$compute": "invalid compute" }))
+        .toThrow("Bad Request: Malformed query parameter '$compute'");
     });
 
     it("should handle invalid $apply syntax", () => {
-      // TODO: Implement query option error handling
-      // expect(() => parseODataQuery({ "$apply": "invalid apply" }))
-      //   .toThrow("Invalid $apply syntax: 'invalid apply'");
-      expect(true).toBe(true);
+      expect(() => validateQueryParameters({ "$apply": "invalid apply" }))
+        .toThrow("Bad Request: Malformed query parameter '$apply'");
     });
 
     it("should handle conflicting query options", () => {
