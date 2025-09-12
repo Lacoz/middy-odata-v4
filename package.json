@@ -52,5 +52,13 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/ladislav-zigo/middy-odata-v4.git"
-  }
+  },
+  "keywords": [
+    "middy",
+    "middleware",
+    "odata",
+    "odata-v4",
+    "aws-lambda",
+    "api-gateway"
+  ]
 }
