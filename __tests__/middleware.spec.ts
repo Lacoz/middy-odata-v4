@@ -44,8 +44,8 @@ describe("Middy integration and behavior", () => {
       await middleware.before!(request as any);
       
       expect(request.internal).toHaveProperty("odata");
-      expect(request.internal.odata.options.select).toEqual(["id", "name"]);
-      expect(request.internal.odata.options.top).toBe(5);
+      expect((request.internal as any).odata.options.select).toEqual(["id", "name"]);
+      expect((request.internal as any).odata.options.top).toBe(5);
     });
 
     it("parses query parameters from API Gateway v2 event", async () => {
@@ -64,8 +64,8 @@ describe("Middy integration and behavior", () => {
       await middleware.before!(request as any);
       
       expect(request.internal).toHaveProperty("odata");
-      expect(request.internal.odata.options.select).toEqual(["id", "name"]);
-      expect(request.internal.odata.options.top).toBe(5);
+      expect((request.internal as any).odata.options.select).toEqual(["id", "name"]);
+      expect((request.internal as any).odata.options.top).toBe(5);
     });
 
     it("handles missing query parameters", async () => {
@@ -82,7 +82,7 @@ describe("Middy integration and behavior", () => {
       await middleware.before!(request as any);
       
       expect(request.internal).toHaveProperty("odata");
-      expect(request.internal.odata.options).toEqual({});
+      expect((request.internal as any).odata.options).toEqual({});
     });
 
     it("sets serviceRoot from function", async () => {
@@ -100,7 +100,7 @@ describe("Middy integration and behavior", () => {
       
       await middleware.before!(request as any);
       
-      expect(request.internal.odata.serviceRoot).toBe("https://custom.api.com/odata");
+      expect((request.internal as any).odata.serviceRoot).toBe("https://custom.api.com/odata");
     });
   });
 
