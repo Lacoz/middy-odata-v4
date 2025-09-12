@@ -1,6 +1,6 @@
 import type { EdmModel } from "../../src/core/types.js";
 
-export const model: EdmModel = {
+export const EDM_MODEL: EdmModel = {
   namespace: "Test",
   entityTypes: [
     {

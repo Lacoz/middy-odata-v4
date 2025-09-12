@@ -1,2 +1,2 @@
-import { ODataCollectionResponse } from './types';
+import type { ODataCollectionResponse } from "./types";
 export declare function serializeCollection<T>(contextUrl: string, value: T[], count?: number, nextLink?: string): ODataCollectionResponse<T>;

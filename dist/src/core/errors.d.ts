@@ -1,4 +1,4 @@
-import { ODataErrorPayload } from './types';
+import type { ODataErrorPayload } from "./types";
 export declare class ODataBadRequest extends Error {
     statusCode: number;
     code: string;

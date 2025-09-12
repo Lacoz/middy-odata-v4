@@ -10,3 +10,12 @@ export function applySelect<T extends ODataEntity>(row: T, select?: string[]): P
 export function projectArray<T extends ODataEntity>(rows: T[], options: ODataQueryOptions): Partial<T>[] {
   return rows.map((r) => applySelect(r, options.select));
 }
+
+// TODO: Implement expand functionality
+export function expandData<T extends Record<string, any>>(
+  data: T | T[],
+  options: ODataQueryOptions
+): T | T[] {
+  // Placeholder implementation
+  return data;
+}

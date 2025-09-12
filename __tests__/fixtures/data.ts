@@ -8,3 +8,33 @@ export const CATEGORIES = [
   { id: 1, title: "Cat1" },
   { id: 2, title: "Cat2" },
 ];
+
+export const USERS = [
+  { 
+    id: 1, 
+    name: "John Doe", 
+    email: "john@example.com",
+    address: {
+      street: "123 Main St",
+      city: "New York",
+      zipCode: "10001"
+    },
+    tags: ["admin", "user"]
+  },
+  { 
+    id: 2, 
+    name: "Jane Smith", 
+    email: "jane@example.com",
+    address: {
+      street: "456 Oak Ave",
+      city: "Los Angeles",
+      zipCode: "90210"
+    },
+    tags: ["user"]
+  }
+];
+
+export const SUPPLIERS = [
+  { id: 1, name: "TechCorp", address: { city: "San Francisco" } },
+  { id: 2, name: "GadgetInc", address: { city: "Seattle" } }
+];

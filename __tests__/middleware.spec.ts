@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { odata } from "../src/middleware";
-import { model } from "./fixtures/edm";
+import { EDM_MODEL } from "./fixtures/edm";
 
 describe("Middy integration and behavior", () => {
   describe("Middleware setup", () => {
     it("creates middleware with required options", () => {
       const middleware = odata({
-        model,
+        model: EDM_MODEL,
         serviceRoot: "https://api.example.com/odata",
       });
       
@@ -16,7 +16,7 @@ describe("Middy integration and behavior", () => {
 
     it("accepts serviceRoot as function", () => {
       const middleware = odata({
-        model,
+        model: EDM_MODEL,
         serviceRoot: (event) => `https://${event.headers?.host}/odata`,
       });
       
@@ -27,7 +27,7 @@ describe("Middy integration and behavior", () => {
   describe("Request processing", () => {
     it("parses query parameters from API Gateway v1 event", async () => {
       const middleware = odata({
-        model,
+        model: EDM_MODEL,
         serviceRoot: "https://api.example.com/odata",
       });
       
@@ -50,7 +50,7 @@ describe("Middy integration and behavior", () => {
 
     it("parses query parameters from API Gateway v2 event", async () => {
       const middleware = odata({
-        model,
+        model: EDM_MODEL,
         serviceRoot: "https://api.example.com/odata",
       });
       
@@ -70,7 +70,7 @@ describe("Middy integration and behavior", () => {
 
     it("handles missing query parameters", async () => {
       const middleware = odata({
-        model,
+        model: EDM_MODEL,
         serviceRoot: "https://api.example.com/odata",
       });
       
@@ -87,7 +87,7 @@ describe("Middy integration and behavior", () => {
 
     it("sets serviceRoot from function", async () => {
       const middleware = odata({
-        model,
+        model: EDM_MODEL,
         serviceRoot: (event) => `https://${event.headers?.host || "api.example.com"}/odata`,
       });
       
