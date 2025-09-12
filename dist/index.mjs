@@ -149,12 +149,14 @@ function u(t, n) {
       return N(n, t.property);
     case "literal":
       return t.value;
-    case "comparison":
+    case "comparison": {
       const r = u(t.left, n), e = u(t.right, n);
       return w(r, t.operator, e);
-    case "logical":
-      const s = u(t.left, n), o = u(t.right, n);
-      return D(s, t.operator, o);
+    }
+    case "logical": {
+      const r = u(t.left, n), e = u(t.right, n);
+      return D(r, t.operator, e);
+    }
     case "function":
       return x(t.function, t.args, n);
     default:

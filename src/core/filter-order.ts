@@ -124,15 +124,17 @@ function evaluateExpression(expr: FilterExpression, entity: any): any {
     case 'literal':
       return expr.value;
     
-    case 'comparison':
+    case 'comparison': {
       const left = evaluateExpression(expr.left!, entity);
       const right = evaluateExpression(expr.right!, entity);
       return evaluateComparison(left, expr.operator!, right);
+    }
     
-    case 'logical':
+    case 'logical': {
       const leftResult = evaluateExpression(expr.left!, entity);
       const rightResult = evaluateExpression(expr.right!, entity);
       return evaluateLogical(leftResult, expr.operator!, rightResult);
+    }
     
     case 'function':
       return evaluateFunction(expr.function!, expr.args!, entity);
@@ -334,6 +336,7 @@ export function filterArray<T extends ODataEntity>(rows: T[], options: ODataQuer
     return rows.filter(row => evaluateExpression(expression, row));
   } catch (error) {
     // If filter parsing fails, return all rows
+    // eslint-disable-next-line no-console, no-undef
     console.warn('Filter parsing failed:', error);
     return rows;
   }
