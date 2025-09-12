@@ -1,41 +1,51 @@
 import { describe, it, expect } from "vitest";
 import { PRODUCTS, USERS } from "./fixtures/data";
+import { 
+  ODataErrorHandler,
+  validateQueryParameters,
+  validateAuthentication,
+  validatePermissions,
+  validateResourceExists,
+  validateHttpMethod,
+  validateContentType,
+  validateEntityConstraints,
+  validateETagMatch,
+  validateRequestSize,
+  validateQueryComplexity,
+  handleTimeout,
+  handleConcurrentModification,
+  handleRateLimit,
+  handleServiceUnavailable,
+  handleNotImplemented,
+  handleBadGateway,
+  handleInternalError
+} from "../src/core/error-handling";
 
 describe("OData v4.01 Error Handling and Edge Cases", () => {
   describe("HTTP Status Codes", () => {
     it("should return 400 Bad Request for malformed URLs", () => {
-      // TODO: Implement error handling
-      // expect(() => parseODataQuery({ "malformed": "query" }))
-      //   .toThrow("Bad Request: Malformed query parameter");
-      expect(true).toBe(true);
+      expect(() => validateQueryParameters({ "malformed": undefined }))
+        .toThrow("Bad Request: Malformed query parameter 'malformed'");
     });
 
     it("should return 401 Unauthorized for missing authentication", () => {
-      // TODO: Implement error handling
-      // expect(() => queryWithAuth(PRODUCTS, { auth: null }))
-      //   .toThrow("Unauthorized: Authentication required");
-      expect(true).toBe(true);
+      expect(() => validateAuthentication(null))
+        .toThrow("Unauthorized: Authentication required");
     });
 
     it("should return 403 Forbidden for insufficient permissions", () => {
-      // TODO: Implement error handling
-      // expect(() => queryWithAuth(PRODUCTS, { auth: "limited" }))
-      //   .toThrow("Forbidden: Insufficient permissions");
-      expect(true).toBe(true);
+      expect(() => validatePermissions({ permissions: ["read"] }, "write"))
+        .toThrow("Forbidden: Insufficient permissions");
     });
 
     it("should return 404 Not Found for non-existent resources", () => {
-      // TODO: Implement error handling
-      // expect(() => queryResource("NonExistentEntitySet"))
-      //   .toThrow("Not Found: Resource not found");
-      expect(true).toBe(true);
+      expect(() => validateResourceExists(null, "NonExistentEntitySet"))
+        .toThrow("Not Found: NonExistentEntitySet not found");
     });
 
     it("should return 405 Method Not Allowed for unsupported HTTP methods", () => {
-      // TODO: Implement error handling
-      // expect(() => queryWithMethod(PRODUCTS, { method: "PATCH" }))
-      //   .toThrow("Method Not Allowed: PATCH not supported on entity set");
-      expect(true).toBe(true);
+      expect(() => validateHttpMethod("PATCH", ["GET", "POST"]))
+        .toThrow("Method Not Allowed: PATCH not supported");
     });
 
     it("should return 406 Not Acceptable for unsupported formats", () => {
@@ -60,18 +70,13 @@ describe("OData v4.01 Error Handling and Edge Cases", () => {
     });
 
     it("should return 412 Precondition Failed for ETag mismatches", () => {
-      // TODO: Implement error handling
-      // expect(() => updateEntity(PRODUCTS, 1, { name: "Updated" }, "Product", { ifMatch: '"stale-etag"' }))
-      //   .toThrow("Precondition Failed: ETag mismatch");
-      expect(true).toBe(true);
+      expect(() => validateETagMatch(PRODUCTS[0], '"invalid"'))
+        .toThrow("Precondition Failed: ETag mismatch");
     });
 
     it("should return 413 Payload Too Large for oversized requests", () => {
-      // TODO: Implement error handling
-      // const largeData = Array(1000000).fill().map((_, i) => ({ id: i, name: `Product ${i}` }));
-      // expect(() => createEntity(PRODUCTS, largeData, "Product"))
-      //   .toThrow("Payload Too Large: Request entity too large");
-      expect(true).toBe(true);
+      expect(() => validateRequestSize(1000000, 100000))
+        .toThrow("Payload Too Large: Request size exceeds limit");
     });
 
     it("should return 415 Unsupported Media Type for invalid content types", () => {
@@ -82,10 +87,8 @@ describe("OData v4.01 Error Handling and Edge Cases", () => {
     });
 
     it("should return 422 Unprocessable Entity for validation errors", () => {
-      // TODO: Implement error handling
-      // expect(() => createEntity(PRODUCTS, { name: "", price: -1 }, "Product"))
-      //   .toThrow("Unprocessable Entity: Validation failed");
-      expect(true).toBe(true);
+      expect(() => validateQueryComplexity("name eq 'test' and price gt 10 and category eq 'electronics' and status eq 'active' and date gt datetime'2023-01-01' and user eq 'admin' and type eq 'premium' and location eq 'warehouse' and supplier eq 'acme' and tags eq 'urgent'", 50))
+        .toThrow("Unprocessable Entity: Query too complex");
     });
 
     it("should return 428 Precondition Required for missing ETags", () => {
@@ -126,14 +129,12 @@ describe("OData v4.01 Error Handling and Edge Cases", () => {
 
   describe("OData Error Responses", () => {
     it("should return proper OData error format", () => {
-      // TODO: Implement OData error format
-      // const error = createODataError("400", "Bad Request", "Invalid query parameter");
-      // expect(error).toHaveProperty("error");
-      // expect(error.error).toHaveProperty("code");
-      // expect(error.error).toHaveProperty("message");
-      // expect(error.error.code).toBe("400");
-      // expect(error.error.message).toBe("Bad Request");
-      expect(true).toBe(true);
+      const error = ODataErrorHandler.badRequest("Invalid query parameter");
+      expect(error).toHaveProperty("error");
+      expect(error.error).toHaveProperty("code");
+      expect(error.error).toHaveProperty("message");
+      expect(error.error.code).toBe("400");
+      expect(error.error.message).toBe("Bad Request: Invalid query parameter");
     });
 
     it("should include error details", () => {
@@ -351,10 +352,10 @@ describe("OData v4.01 Error Handling and Edge Cases", () => {
 
   describe("Performance and Limits", () => {
     it("should handle query timeout", () => {
-      // TODO: Implement performance limits
-      // expect(() => queryWithTimeout(PRODUCTS, { timeout: 1000 }))
-      //   .toThrow("Query timeout: Operation exceeded 1000ms");
-      expect(true).toBe(true);
+      return expect(handleTimeout(() => {
+        // Simulate long operation
+        return new Promise(resolve => setTimeout(resolve, 2000));
+      }, 100)).rejects.toThrow("Gateway Timeout: Operation timed out");
     });
 
     it("should handle memory limits", () => {
@@ -417,10 +418,8 @@ describe("OData v4.01 Error Handling and Edge Cases", () => {
     });
 
     it("should handle rate limiting", () => {
-      // TODO: Implement security error handling
-      // expect(() => queryWithRateLimit(PRODUCTS, { rate: "exceeded" }))
-      //   .toThrow("Rate limit exceeded: Too many requests");
-      expect(true).toBe(true);
+      expect(() => handleRateLimit(1000, 100))
+        .toThrow("Too Many Requests: Rate limit exceeded");
     });
   });
 
