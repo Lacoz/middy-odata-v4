@@ -1,8 +1,9 @@
 # middy-odata-v4
 
-[![CI](https://github.com/ladislav-zigo/middy-odata-v4/actions/workflows/ci.yml/badge.svg)](https://github.com/ladislav-zigo/middy-odata-v4/actions/workflows/ci.yml)
-
-# middy-odata-v4
+[![CI](https://github.com/Lacoz/middy-odata-v4/actions/workflows/ci.yml/badge.svg)](https://github.com/Lacoz/middy-odata-v4/actions/workflows/ci.yml)
+[![npm version](https://badge.fury.io/js/middy-odata-v4.svg)](https://badge.fury.io/js/middy-odata-v4)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)
 
 Middy middleware for AWS Lambda that parses and applies OData v4.01 query options and produces OData-compliant responses. This repository starts with a complete, test-first plan and suite to verify OData 4.01 core behaviors relevant to typical REST-backed collections.
 
