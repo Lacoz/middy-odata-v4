@@ -1,4 +1,4 @@
-import type { ODataEntity, ODataQueryOptions } from "./types";
+import type { ODataEntity } from "./types";
 import { generateServiceDocument, generateMetadata } from "./metadata";
 import { projectArray, expandData } from "./shape";
 import { filterArray, orderArray, paginateArray } from "./filter-order";

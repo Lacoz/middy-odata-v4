@@ -354,7 +354,7 @@ describe("OData v4.01 Error Handling and Edge Cases", () => {
     it("should handle query timeout", () => {
       return expect(handleTimeout(() => {
         // Simulate long operation
-        return new Promise(resolve => setTimeout(resolve, 2000));
+        return new Promise(resolve => globalThis.setTimeout(resolve, 2000));
       }, 100)).rejects.toThrow("Gateway Timeout: Operation timed out");
     });
 

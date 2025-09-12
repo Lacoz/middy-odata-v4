@@ -45,7 +45,7 @@ export declare function validateEntityConstraints<T extends ODataEntity>(entity:
 export declare function validateETagMatch(entity: ODataEntity, etag: string): void;
 export declare function validateRequestSize(requestSize: number, maxSize: number): void;
 export declare function validateQueryComplexity(query: string, maxComplexity: number): void;
-export declare function handleTimeout(operation: () => any, timeoutMs: number): Promise<any>;
+export declare function handleTimeout(operation: () => unknown, timeoutMs: number): Promise<unknown>;
 export declare function handleConcurrentModification(entity: ODataEntity, etag: string): void;
 export declare function handleRateLimit(requests: number, limit: number): void;
 export declare function handleServiceUnavailable(): void;

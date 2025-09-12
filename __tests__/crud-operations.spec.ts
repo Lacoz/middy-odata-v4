@@ -15,7 +15,7 @@ describe("OData v4.01 CRUD Operations", () => {
   describe("Create Operations", () => {
     it("should create new entity", () => {
       const newProduct = { name: "New Product", price: 25, categoryId: 1 };
-      const result = createEntity(PRODUCTS, newProduct, "Product");
+      const result = createEntity(PRODUCTS, newProduct);
       expect(result).toHaveProperty("id");
       expect(result.name).toBe("New Product");
       expect(result.price).toBe(25);
@@ -27,7 +27,7 @@ describe("OData v4.01 CRUD Operations", () => {
         price: 25, 
         categoryId: 1
       };
-      const result = createEntity(PRODUCTS, newProduct, "Product");
+      const result = createEntity(PRODUCTS, newProduct);
       expect(result).toHaveProperty("categoryId");
       expect(result.categoryId).toBe(1);
     });
@@ -42,7 +42,7 @@ describe("OData v4.01 CRUD Operations", () => {
           zipCode: "10001"
         }
       };
-      const result = createEntity(USERS, newUser, "User");
+      const result = createEntity(USERS, newUser);
       expect(result).toHaveProperty("address");
       expect((result as any).address.city).toBe("New York");
     });
@@ -104,20 +104,20 @@ describe("OData v4.01 CRUD Operations", () => {
 
   describe("Read Operations", () => {
     it("should read single entity by key", () => {
-      const result = readEntity(PRODUCTS, 1, "Product");
+      const result = readEntity(PRODUCTS, 1);
       expect(result).toHaveProperty("id");
       expect((result as any).id).toBe(1);
       expect((result as any).name).toBe("A");
     });
 
     it("should read entity with navigation properties", () => {
-      const result = readEntity(PRODUCTS, 1, "Product");
+      const result = readEntity(PRODUCTS, 1);
       expect(result).toHaveProperty("id");
       expect((result as any).id).toBe(1);
     });
 
     it("should read entity with selected properties", () => {
-      const result = readEntity(PRODUCTS, 1, "Product");
+      const result = readEntity(PRODUCTS, 1);
       expect(result).toHaveProperty("name");
       expect(result).toHaveProperty("price");
       expect((result as any).name).toBe("A");
@@ -179,7 +179,7 @@ describe("OData v4.01 CRUD Operations", () => {
   describe("Update Operations", () => {
     it("should update entity properties", () => {
       const updates = { name: "Updated Product", price: 30 };
-      const result = updateEntity(PRODUCTS, 1, updates, "Product");
+      const result = updateEntity(PRODUCTS, 1, updates);
       expect((result as any).name).toBe("Updated Product");
       expect((result as any).price).toBe(30);
     });
@@ -272,9 +272,9 @@ describe("OData v4.01 CRUD Operations", () => {
 
   describe("Delete Operations", () => {
     it("should delete entity by key", () => {
-      const result = deleteEntity(PRODUCTS, 1, "Product");
+      const result = deleteEntity(PRODUCTS, 1);
       expect(result).toBe(true);
-      expect(readEntity(PRODUCTS, 1, "Product")).toBeNull();
+      expect(readEntity(PRODUCTS, 1)).toBeNull();
     });
 
     it("should handle composite keys in delete", () => {

@@ -1,69 +1,72 @@
 import { describe, it, expect } from "vitest";
 import { PRODUCTS, USERS } from "./fixtures/data";
+import { 
+  serializeToJson,
+  serializeToXml,
+  serializeToAtom,
+  serializeToCsv,
+  serializeToText,
+  serializeEntity,
+  serializeMetadata,
+  serializeServiceDocument,
+  serializeError,
+  getSupportedFormats,
+  validateFormat,
+  getContentType,
+  serializeWithFormat
+} from "../src/core/format-serialization";
 
 describe("OData v4.01 Format and Serialization", () => {
   describe("JSON Format", () => {
     it("should serialize entity collection in JSON format", () => {
-      // TODO: Implement JSON serialization
-      // const result = serializeToJson(PRODUCTS, { format: "json" });
-      // expect(result).toHaveProperty("@odata.context");
-      // expect(result).toHaveProperty("value");
-      // expect(Array.isArray(result.value)).toBe(true);
-      expect(true).toBe(true);
+      const result = serializeToJson(PRODUCTS, { format: "json" });
+      expect(result).toHaveProperty("@odata.context");
+      expect(result).toHaveProperty("value");
+      expect(Array.isArray(result.value)).toBe(true);
     });
 
     it("should serialize single entity in JSON format", () => {
-      // TODO: Implement JSON serialization
-      // const result = serializeToJson(PRODUCTS[0], { format: "json" });
-      // expect(result).toHaveProperty("@odata.context");
-      // expect(result).toHaveProperty("id");
-      // expect(result).toHaveProperty("name");
-      expect(true).toBe(true);
+      const result = serializeToJson(PRODUCTS[0], { format: "json" });
+      expect(result).toHaveProperty("@odata.context");
+      expect(result).toHaveProperty("id");
+      expect(result).toHaveProperty("name");
     });
 
     it("should include @odata.context in JSON response", () => {
-      // TODO: Implement JSON serialization
-      // const result = serializeToJson(PRODUCTS, { 
-      //   format: "json",
-      //   serviceRoot: "https://api.example.com/odata"
-      // });
-      // expect(result["@odata.context"]).toBe("https://api.example.com/odata/$metadata#Products");
-      expect(true).toBe(true);
+      const result = serializeToJson(PRODUCTS, { 
+        format: "json",
+        serviceRoot: "https://api.example.com/odata"
+      });
+      expect(result["@odata.context"]).toBe("https://api.example.com/odata/$metadata#Products");
     });
 
     it("should include @odata.count in JSON response when requested", () => {
-      // TODO: Implement JSON serialization
-      // const result = serializeToJson(PRODUCTS, { 
-      //   format: "json",
-      //   count: true
-      // });
-      // expect(result).toHaveProperty("@odata.count");
-      // expect(result["@odata.count"]).toBe(3);
-      expect(true).toBe(true);
+      const result = serializeToJson(PRODUCTS, { 
+        format: "json",
+        count: true
+      });
+      expect(result).toHaveProperty("@odata.count");
+      expect(result["@odata.count"]).toBe(3);
     });
 
     it("should include @odata.nextLink in JSON response for pagination", () => {
-      // TODO: Implement JSON serialization
-      // const result = serializeToJson(PRODUCTS, { 
-      //   format: "json",
-      //   top: 2,
-      //   skip: 0,
-      //   serviceRoot: "https://api.example.com/odata"
-      // });
-      // expect(result).toHaveProperty("@odata.nextLink");
-      // expect(result["@odata.nextLink"]).toBe("https://api.example.com/odata/Products?$skip=2&$top=2");
-      expect(true).toBe(true);
+      const result = serializeToJson(PRODUCTS, { 
+        format: "json",
+        top: 2,
+        skip: 0,
+        serviceRoot: "https://api.example.com/odata"
+      });
+      expect(result).toHaveProperty("@odata.nextLink");
+      expect(result["@odata.nextLink"]).toBe("https://api.example.com/odata/Products?$top=2&$skip=2");
     });
 
     it("should include @odata.deltaLink in JSON response for delta queries", () => {
-      // TODO: Implement JSON serialization
-      // const result = serializeToJson(PRODUCTS, { 
-      //   format: "json",
-      //   delta: true,
-      //   serviceRoot: "https://api.example.com/odata"
-      // });
-      // expect(result).toHaveProperty("@odata.deltaLink");
-      expect(true).toBe(true);
+      const result = serializeToJson(PRODUCTS, { 
+        format: "json",
+        serviceRoot: "https://api.example.com/odata",
+        deltaLink: true
+      });
+      expect(result).toHaveProperty("@odata.deltaLink");
     });
 
     it("should serialize navigation properties in JSON format", () => {
@@ -163,12 +166,10 @@ describe("OData v4.01 Format and Serialization", () => {
 
   describe("XML Format", () => {
     it("should serialize entity collection in XML format", () => {
-      // TODO: Implement XML serialization
-      // const result = serializeToXml(PRODUCTS, { format: "xml" });
-      // expect(result).toContain("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-      // expect(result).toContain("<feed>");
-      // expect(result).toContain("<entry>");
-      expect(true).toBe(true);
+      const result = serializeToXml(PRODUCTS, { format: "xml" });
+      expect(result).toContain('<?xml version="1.0" encoding="utf-8"?>');
+      expect(result).toContain("<feed");
+      expect(result).toContain("<entry>");
     });
 
     it("should serialize single entity in XML format", () => {

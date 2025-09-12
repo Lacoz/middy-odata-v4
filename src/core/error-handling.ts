@@ -176,30 +176,30 @@ export function validateQueryComplexity(query: string, maxComplexity: number): v
   }
 }
 
-export function handleTimeout(operation: () => any, timeoutMs: number): Promise<any> {
+export function handleTimeout(operation: () => unknown, timeoutMs: number): Promise<unknown> {
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => {
+    const timer = globalThis.setTimeout(() => {
       reject(new Error("Gateway Timeout: Operation timed out"));
     }, timeoutMs);
     
     try {
       const result = operation();
-      if (result && typeof result.then === 'function') {
+      if (result && typeof result === 'object' && 'then' in result && typeof (result as Promise<unknown>).then === 'function') {
         // Handle Promise result
-        result.then((value: any) => {
-          clearTimeout(timer);
+        (result as Promise<unknown>).then((value: unknown) => {
+          globalThis.clearTimeout(timer);
           resolve(value);
-        }).catch((error: any) => {
-          clearTimeout(timer);
+        }).catch((error: unknown) => {
+          globalThis.clearTimeout(timer);
           reject(error);
         });
       } else {
         // Handle synchronous result
-        clearTimeout(timer);
+        globalThis.clearTimeout(timer);
         resolve(result);
       }
     } catch (error) {
-      clearTimeout(timer);
+      globalThis.clearTimeout(timer);
       reject(error);
     }
   });

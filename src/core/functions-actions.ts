@@ -1,9 +1,9 @@
-import type { ODataEntity } from "./types";
+// import type { ODataEntity } from "./types";
 
 export interface FunctionParameter {
   name: string;
   type: string;
-  value: any;
+  value: unknown;
 }
 
 export interface FunctionCall {
@@ -15,7 +15,7 @@ export interface FunctionCall {
 export interface ActionParameter {
   name: string;
   type: string;
-  value: any;
+  value: unknown;
 }
 
 export interface ActionCall {
@@ -25,20 +25,20 @@ export interface ActionCall {
 }
 
 export interface FunctionResult {
-  value: any;
+  value: unknown;
   "@odata.context"?: string;
 }
 
 export interface ActionResult {
-  value?: any;
+  value?: unknown;
   "@odata.context"?: string;
 }
 
 // Function registry for unbound functions
-const functionRegistry = new Map<string, Function>();
+const functionRegistry = new Map<string, (params: Record<string, unknown>) => FunctionResult>();
 
 // Action registry for unbound actions
-const actionRegistry = new Map<string, Function>();
+const actionRegistry = new Map<string, (params: Record<string, unknown>) => ActionResult>();
 
 // Register built-in functions
 functionRegistry.set("getProductsByCategory", (params: any) => {
@@ -72,10 +72,10 @@ functionRegistry.set("calculateShipping", (params: any) => {
   };
 });
 
-functionRegistry.set("calculateBulkDiscount", (params: any) => {
-  const { productIds, quantities } = params;
+functionRegistry.set("calculateBulkDiscount", (params: Record<string, unknown>) => {
+  const { quantities } = params;
   // Mock bulk discount calculation
-  const totalItems = quantities.reduce((sum: number, qty: number) => sum + qty, 0);
+  const totalItems = (quantities as number[]).reduce((sum: number, qty: number) => sum + qty, 0);
   const discount = totalItems >= 10 ? 0.15 : totalItems >= 5 ? 0.10 : 0.05;
   return {
     value: discount
@@ -145,13 +145,13 @@ actionRegistry.set("bulkUpdateProducts", (params: any) => {
   };
 });
 
-actionRegistry.set("sendNotification", (params: any) => {
-  const { message, recipients } = params;
+actionRegistry.set("sendNotification", (params: Record<string, unknown>) => {
+  const { recipients } = params;
   return {
     value: {
       messageId: Date.now(),
       status: "sent",
-      recipients: recipients.length,
+      recipients: (recipients as string[]).length,
       sentAt: new Date().toISOString()
     }
   };
@@ -195,15 +195,15 @@ export function callBoundAction(entityId: string, actionName: string, parameters
   return callAction(actionName, boundParams);
 }
 
-export function registerFunction(name: string, implementation: Function): void {
+export function registerFunction(name: string, implementation: (params: Record<string, unknown>) => FunctionResult): void {
   functionRegistry.set(name, implementation);
 }
 
-export function registerAction(name: string, implementation: Function): void {
+export function registerAction(name: string, implementation: (params: Record<string, unknown>) => ActionResult): void {
   actionRegistry.set(name, implementation);
 }
 
-export function getFunctionMetadata(functionName: string): any {
+export function getFunctionMetadata(functionName: string): Record<string, unknown> {
   const func = functionRegistry.get(functionName);
   if (!func) {
     throw new Error(`Function '${functionName}' not found`);
@@ -219,7 +219,7 @@ export function getFunctionMetadata(functionName: string): any {
   };
 }
 
-export function getActionMetadata(actionName: string): any {
+export function getActionMetadata(actionName: string): Record<string, unknown> {
   const action = actionRegistry.get(actionName);
   if (!action) {
     throw new Error(`Action '${actionName}' not found`);

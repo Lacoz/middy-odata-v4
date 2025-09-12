@@ -1,10 +1,9 @@
-import type { ODataEntity, ODataQueryOptions } from "./types";
+import type { ODataEntity } from "./types";
 
 // Simple CRUD operations implementation
 export function createEntity<T extends ODataEntity>(
   collection: T[], 
-  entity: Partial<T>, 
-  entityType: string
+  entity: Partial<T>
 ): T {
   // Generate a new ID (simple implementation)
   const newId = Math.max(...collection.map(item => (item as any).id || 0)) + 1;
@@ -22,8 +21,7 @@ export function createEntity<T extends ODataEntity>(
 
 export function readEntity<T extends ODataEntity>(
   collection: T[], 
-  key: string | number, 
-  entityType: string
+  key: string | number
 ): T | null {
   const entity = collection.find(item => (item as any).id === key);
   return entity || null;
@@ -32,8 +30,7 @@ export function readEntity<T extends ODataEntity>(
 export function updateEntity<T extends ODataEntity>(
   collection: T[], 
   key: string | number, 
-  updates: Partial<T>, 
-  entityType: string
+  updates: Partial<T>
 ): T | null {
   const index = collection.findIndex(item => (item as any).id === key);
   if (index === -1) return null;
@@ -49,8 +46,7 @@ export function updateEntity<T extends ODataEntity>(
 
 export function deleteEntity<T extends ODataEntity>(
   collection: T[], 
-  key: string | number, 
-  entityType: string
+  key: string | number
 ): boolean {
   const index = collection.findIndex(item => (item as any).id === key);
   if (index === -1) return false;
@@ -84,7 +80,7 @@ export function generateETag(entity: ODataEntity): string {
   // Simple ETag generation based on entity content
   const content = JSON.stringify(entity);
   // Use btoa for base64 encoding (browser compatible)
-  const encoded = btoa(content).slice(0, 16);
+  const encoded = globalThis.btoa(content).slice(0, 16);
   return `"${encoded}"`;
 }
 
@@ -97,11 +93,11 @@ export function handleBatchOperations<T extends ODataEntity>(
   operations: Array<{
     method: 'POST' | 'PUT' | 'PATCH' | 'DELETE';
     url: string;
-    body?: any;
+    body?: unknown;
     headers?: Record<string, string>;
   }>,
-  collections: Record<string, T[]>
-): Array<{ success: boolean; data?: any; error?: string }> {
+  _collections: Record<string, T[]>
+): Array<{ success: boolean; data?: unknown; error?: string }> {
   const results = [];
   
   for (const operation of operations) {
@@ -114,7 +110,7 @@ export function handleBatchOperations<T extends ODataEntity>(
       } else if (operation.method === 'DELETE') {
         results.push({ success: true, data: { deleted: true } });
       }
-    } catch (error) {
+    } catch {
       results.push({ success: false, error: 'Operation failed' });
     }
   }
