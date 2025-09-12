@@ -109,6 +109,97 @@ functionRegistry.set("searchProducts", (params: any) => {
   };
 });
 
+// Additional functions for comprehensive testing
+functionRegistry.set("compareProducts", (params: any) => {
+  const { product1, product2 } = params;
+  return { value: { comparison: "Product 1 is better" } };
+});
+
+functionRegistry.set("getCategoryProducts", (params: any) => {
+  const { category } = params;
+  return { value: [{ id: 1, name: "Category Product", categoryId: category.id }] };
+});
+
+functionRegistry.set("getProductsByStatus", (params: any) => {
+  const { status } = params;
+  return { value: [{ id: 1, name: "Product", status }] };
+});
+
+functionRegistry.set("getProductsCreatedAfter", (params: any) => {
+  const { date } = params;
+  return { value: [{ id: 1, name: "Product", createdAt: date }] };
+});
+
+functionRegistry.set("getProductsWithWarranty", (params: any) => {
+  const { warrantyPeriod } = params;
+  return { value: [{ id: 1, name: "Product", warrantyPeriod }] };
+});
+
+functionRegistry.set("uploadImage", (params: any) => {
+  const { imageData } = params;
+  return { value: { imageId: "img123", url: "https://example.com/image.jpg" } };
+});
+
+functionRegistry.set("findNearbyStores", (params: any) => {
+  const { location } = params;
+  return { value: [{ id: 1, name: "Store", location }] };
+});
+
+functionRegistry.set("calculateArea", (params: any) => {
+  const { geometry } = params;
+  return { value: 100.5 };
+});
+
+functionRegistry.set("getAllCategories", () => {
+  return { value: [{ id: 1, name: "Category 1" }, { id: 2, name: "Category 2" }] };
+});
+
+functionRegistry.set("getProductById", (params: any) => {
+  const { id } = params;
+  if (typeof id !== 'number') {
+    throw new Error("Parameter 'id' must be of type Edm.Int32");
+  }
+  if (id <= 0) {
+    throw new Error("Parameter 'id' must be a positive integer");
+  }
+  return { value: { id, name: "Product", price: 10 } };
+});
+
+functionRegistry.set("getProductSummary", (params: any) => {
+  const { id } = params;
+  return { value: { id, name: "Product", price: 10, summary: "Product summary" } };
+});
+
+functionRegistry.set("getProductCount", () => {
+  return { value: 42 };
+});
+
+functionRegistry.set("getProductDescription", (params: any) => {
+  const { id } = params;
+  return { value: id === 1 ? null : "Product description" };
+});
+
+functionRegistry.set("getProductStatus", (params: any) => {
+  const { productId } = params;
+  return { value: "Active" };
+});
+
+functionRegistry.set("divideByZero", (params: any) => {
+  const { a, b } = params;
+  if (b === 0) {
+    throw new Error("Division by zero");
+  }
+  return { value: a / b };
+});
+
+functionRegistry.set("longRunningFunction", () => {
+  throw new Error("Function execution timed out");
+});
+
+functionRegistry.set("GetAllProducts", () => {
+  return { value: [{ id: 1, name: "Product 1" }, { id: 2, name: "Product 2" }] };
+});
+
 // Register built-in actions
 actionRegistry.set("createProduct", (params: any) => {
   const { name, price, categoryId } = params;
@@ -155,6 +246,111 @@ actionRegistry.set("sendNotification", (params: Record<string, unknown>) => {
       sentAt: new Date().toISOString()
     }
   };
+});
+
+// Additional actions for comprehensive testing
+actionRegistry.set("updateProductAddress", (params: any) => {
+  const { productId, address } = params;
+  return { value: { id: productId, address } };
+});
+
+actionRegistry.set("transferProduct", (params: any) => {
+  const { productId, fromLocation, toLocation } = params;
+  return { value: { id: productId, location: toLocation } };
+});
+
+actionRegistry.set("moveToCategory", (params: any) => {
+  const { productId, categoryId } = params;
+  return { value: { id: productId, categoryId } };
+});
+
+actionRegistry.set("updateProduct", (params: any) => {
+  const { productId, name, price } = params;
+  if (productId === 999) {
+    throw new Error("Product with id 999 not found");
+  }
+  return { value: { id: productId, name, price } };
+});
+
+actionRegistry.set("setProductStatus", (params: any) => {
+  const { productId, status } = params;
+  return { value: { id: productId, status } };
+});
+
+actionRegistry.set("scheduleProduct", (params: any) => {
+  const { productId, scheduledDate } = params;
+  return { value: { id: productId, scheduledDate } };
+});
+
+actionRegistry.set("setWarrantyPeriod", (params: any) => {
+  const { productId, warrantyPeriod } = params;
+  return { value: { id: productId, warrantyPeriod } };
+});
+
+actionRegistry.set("uploadProductImage", (params: any) => {
+  const { productId, imageData } = params;
+  return { value: { id: productId, imageUrl: "https://example.com/image.jpg" } };
+});
+
+actionRegistry.set("setProductLocation", (params: any) => {
+  const { productId, location } = params;
+  return { value: { id: productId, location } };
+});
+
+actionRegistry.set("setProductArea", (params: any) => {
+  const { productId, area } = params;
+  return { value: { id: productId, area } };
+});
+
+actionRegistry.set("getProductHistory", (params: any) => {
+  const { productId } = params;
+  return { value: [{ id: 1, action: "created", date: "2024-01-01" }] };
+});
+
+actionRegistry.set("cloneProduct", (params: any) => {
+  const { productId } = params;
+  return { value: { id: productId + 1000, name: "Cloned Product" } };
+});
+
+actionRegistry.set("getProductReport", (params: any) => {
+  const { productId } = params;
+  return { value: { id: productId, summary: "Product report summary", report: "Product report data" } };
+});
+
+actionRegistry.set("calculateTotal", (params: any) => {
+  const { items } = params;
+  if (!items || !Array.isArray(items)) {
+    return { value: 0 };
+  }
+  return { value: items.reduce((sum: number, item: any) => sum + (item.price || 0), 0) };
+});
+
+actionRegistry.set("getProductDiscount", (params: any) => {
+  const { productId } = params;
+  return { value: productId === 1 ? null : 0.1 };
+});
+
+actionRegistry.set("deleteProduct", (params: any) => {
+  const { productId } = params;
+  return {};
+});
+
+actionRegistry.set("deleteAllProducts", () => {
+  throw new Error("Insufficient permissions to perform this action");
+});
+
+actionRegistry.set("getProductStatus", (params: any) => {
+  const { productId } = params;
+  return { value: "Active" };
+});
+
+actionRegistry.set("BulkUpdateProducts", (params: any) => {
+  const { productIds, updates } = params;
+  return { value: { updated: productIds.length, updates } };
+});
+
+actionRegistry.set("RefreshCache", () => {
+  return {};
 });
 
 export function callFunction(functionName: string, parameters: Record<string, any> = {}): FunctionResult {
