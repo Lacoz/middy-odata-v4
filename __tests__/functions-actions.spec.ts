@@ -1,52 +1,60 @@
 import { describe, it, expect } from "vitest";
 import { PRODUCTS, USERS } from "./fixtures/data";
+import { 
+  callFunction,
+  callAction,
+  callBoundFunction,
+  callBoundAction,
+  registerFunction,
+  registerAction,
+  getFunctionMetadata,
+  getActionMetadata,
+  validateFunctionParameters,
+  validateActionParameters,
+  executeFunctionImport,
+  executeActionImport,
+  getAvailableFunctions,
+  getAvailableActions
+} from "../src/core/functions-actions";
 
 describe("OData v4.01 Functions and Actions", () => {
   describe("Functions", () => {
     it("should call bound function on entity", () => {
-      // TODO: Implement function calls
-      // const result = callFunction("Products(1)/getRelatedProducts", { maxCount: 5 });
-      // expect(result).toHaveProperty("value");
-      // expect(Array.isArray(result.value)).toBe(true);
-      expect(true).toBe(true);
+      const result = callBoundFunction("1", "getRelatedProducts", { maxCount: 5 });
+      expect(result).toHaveProperty("value");
+      expect(Array.isArray(result.value)).toBe(true);
     });
 
     it("should call unbound function", () => {
-      // TODO: Implement function calls
-      // const result = callFunction("getProductsByCategory", { categoryId: 1, minPrice: 10 });
-      // expect(result).toHaveProperty("value");
-      // expect(Array.isArray(result.value)).toBe(true);
-      expect(true).toBe(true);
+      const result = callFunction("getProductsByCategory", { categoryId: 1, minPrice: 10 });
+      expect(result).toHaveProperty("value");
+      expect(Array.isArray(result.value)).toBe(true);
     });
 
     it("should call function with primitive parameters", () => {
-      // TODO: Implement function calls
-      // const result = callFunction("calculatePrice", { basePrice: 100, discount: 0.1 });
-      // expect(result).toHaveProperty("value");
-      // expect(result.value).toBe(90);
-      expect(true).toBe(true);
+      const result = callFunction("calculatePrice", { basePrice: 100, discount: 0.1 });
+      expect(result).toHaveProperty("value");
+      expect(result.value).toBe(90);
     });
 
     it("should call function with complex type parameters", () => {
-      // TODO: Implement function calls
-      // const result = callFunction("calculateShipping", { 
-      //   address: { 
-      //     city: "New York", 
-      //     zipCode: "10001" 
-      //   } 
-      // });
-      // expect(result).toHaveProperty("value");
-      expect(true).toBe(true);
+      const result = callFunction("calculateShipping", { 
+        address: { 
+          city: "New York", 
+          zipCode: "10001" 
+        } 
+      });
+      expect(result).toHaveProperty("value");
+      expect(result.value).toBe(5.99);
     });
 
     it("should call function with collection parameters", () => {
-      // TODO: Implement function calls
-      // const result = callFunction("calculateBulkDiscount", { 
-      //   productIds: [1, 2, 3], 
-      //   quantities: [2, 1, 3] 
-      // });
-      // expect(result).toHaveProperty("value");
-      expect(true).toBe(true);
+      const result = callFunction("calculateBulkDiscount", { 
+        productIds: [1, 2, 3], 
+        quantities: [2, 1, 3] 
+      });
+      expect(result).toHaveProperty("value");
+      expect(result.value).toBe(0.10); // 6 total items = 10% discount
     });
 
     it("should call function with entity parameters", () => {
@@ -79,12 +87,12 @@ describe("OData v4.01 Functions and Actions", () => {
     });
 
     it("should call function with default parameter values", () => {
-      // TODO: Implement function calls
-      // const result = callFunction("getProducts", { 
-      //   // limit parameter has default value of 20
-      // });
-      // expect(result).toHaveProperty("value");
-      expect(true).toBe(true);
+      const result = callFunction("getProductsByCategory", { 
+        categoryId: 1
+        // minPrice uses default value
+      });
+      expect(result).toHaveProperty("value");
+      expect(Array.isArray(result.value)).toBe(true);
     });
 
     it("should call function with nullable parameters", () => {
@@ -203,30 +211,29 @@ describe("OData v4.01 Functions and Actions", () => {
 
   describe("Actions", () => {
     it("should call bound action on entity", () => {
-      // TODO: Implement action calls
-      // const result = callAction("Products(1)/activate", { reason: "Manual activation" });
-      // expect(result).toHaveProperty("value");
-      expect(true).toBe(true);
+      const result = callBoundAction("1", "updateProductPrice", { newPrice: 25 });
+      expect(result).toHaveProperty("value");
+      expect((result.value as any).price).toBe(25);
     });
 
     it("should call unbound action", () => {
-      // TODO: Implement action calls
-      // const result = callAction("bulkUpdateProducts", { 
-      //   productIds: [1, 2, 3], 
-      //   updates: { status: "Active" } 
-      // });
-      // expect(result).toHaveProperty("value");
-      expect(true).toBe(true);
+      const result = callAction("bulkUpdateProducts", { 
+        updates: [
+          { id: 1, newPrice: 20 },
+          { id: 2, newPrice: 30 }
+        ]
+      });
+      expect(result).toHaveProperty("value");
+      expect(Array.isArray(result.value)).toBe(true);
     });
 
     it("should call action with primitive parameters", () => {
-      // TODO: Implement action calls
-      // const result = callAction("updateProductPrice", { 
-      //   productId: 1, 
-      //   newPrice: 25.99 
-      // });
-      // expect(result).toHaveProperty("value");
-      expect(true).toBe(true);
+      const result = callAction("updateProductPrice", { 
+        productId: 1, 
+        newPrice: 25.99 
+      });
+      expect(result).toHaveProperty("value");
+      expect((result.value as any).price).toBe(25.99);
     });
 
     it("should call action with complex type parameters", () => {
@@ -243,13 +250,12 @@ describe("OData v4.01 Functions and Actions", () => {
     });
 
     it("should call action with collection parameters", () => {
-      // TODO: Implement action calls
-      // const result = callAction("assignTags", { 
-      //   productId: 1, 
-      //   tags: ["featured", "sale"] 
-      // });
-      // expect(result).toHaveProperty("value");
-      expect(true).toBe(true);
+      const result = callAction("sendNotification", { 
+        message: "Product updated", 
+        recipients: ["user1", "user2"] 
+      });
+      expect(result).toHaveProperty("value");
+      expect((result.value as any).recipients).toBe(2);
     });
 
     it("should call action with entity parameters", () => {
@@ -421,10 +427,9 @@ describe("OData v4.01 Functions and Actions", () => {
 
   describe("Function and Action Import", () => {
     it("should call function import", () => {
-      // TODO: Implement function import calls
-      // const result = callFunctionImport("GetProductsByCategory", { categoryId: 1 });
-      // expect(result).toHaveProperty("value");
-      expect(true).toBe(true);
+      const result = executeFunctionImport("getProductsByCategory", { categoryId: 1 });
+      expect(result).toHaveProperty("value");
+      expect(Array.isArray(result.value)).toBe(true);
     });
 
     it("should call action import", () => {
@@ -454,24 +459,18 @@ describe("OData v4.01 Functions and Actions", () => {
 
   describe("Error Handling", () => {
     it("should handle invalid function name", () => {
-      // TODO: Implement error handling
-      // expect(() => callFunction("InvalidFunction", {}))
-      //   .toThrow("Function 'InvalidFunction' not found");
-      expect(true).toBe(true);
+      expect(() => callFunction("InvalidFunction", {}))
+        .toThrow("Function 'InvalidFunction' not found");
     });
 
     it("should handle invalid action name", () => {
-      // TODO: Implement error handling
-      // expect(() => callAction("InvalidAction", {}))
-      //   .toThrow("Action 'InvalidAction' not found");
-      expect(true).toBe(true);
+      expect(() => callAction("InvalidAction", {}))
+        .toThrow("Action 'InvalidAction' not found");
     });
 
     it("should handle missing required parameters", () => {
-      // TODO: Implement error handling
-      // expect(() => callFunction("getProductById", {}))
-      //   .toThrow("Required parameter 'id' is missing");
-      expect(true).toBe(true);
+      expect(() => validateFunctionParameters("getProductsByCategory", {}))
+        .toThrow("Function 'getProductsByCategory' requires parameter 'categoryId'");
     });
 
     it("should handle invalid parameter types", () => {
