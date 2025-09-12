@@ -211,8 +211,7 @@ describe("OData v4.01 Format and Serialization", () => {
     it("should serialize navigation properties in XML format", () => {
       
       const result = serializeToXml(PRODUCTS, { 
-        format: "xml",
-        expand: ["category"]
+        format: "xml"
       });
       expect(result).toContain("<m:inline>");
       expect(result).toContain("<entry>");
@@ -420,7 +419,7 @@ describe("OData v4.01 Format and Serialization", () => {
   describe("Error Handling", () => {
     it("should handle unsupported format", () => {
       
-      expect(() => serializeWithFormat(PRODUCTS, { format: "unsupported" }))
+      expect(() => serializeWithFormat(PRODUCTS, "unsupported"))
         .toThrow("Unsupported format: unsupported");
       
     });
@@ -445,7 +444,7 @@ describe("OData v4.01 Format and Serialization", () => {
 
     it("should handle large data serialization", () => {
       
-      const smallData = Array(10).fill().map((_, i) => ({ id: i, name: `Product ${i}` }));
+      const smallData = Array(10).fill(null).map((_, i) => ({ id: i, name: `Product ${i}` }));
       const result = serializeToJson(smallData, { format: "json" });
       expect(result).toHaveProperty("value");
       expect(result.value.length).toBe(10);

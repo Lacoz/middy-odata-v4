@@ -1,4 +1,4 @@
-import { ODataEntity } from './types';
+import type { ODataEntity } from "./types";
 export interface ODataError {
     error: {
         code: string;
@@ -52,3 +52,43 @@ export declare function handleServiceUnavailable(): void;
 export declare function handleNotImplemented(feature: string): void;
 export declare function handleBadGateway(): void;
 export declare function handleInternalError(error: Error): void;
+export declare function createEntity<T extends ODataEntity>(collection: T[], entity: Partial<T>, entityType: string, options?: {
+    contentType?: string;
+}): T;
+export declare function processLargeData(data: any[]): void;
+export declare function queryWithLimit<T>(collection: T[], options: {
+    limit: number;
+}): T[];
+export declare function queryWithDepth<T>(collection: T[], options: {
+    depth: number;
+}): T[];
+export declare function queryWithComplexity<T>(collection: T[], options: {
+    complexity: string;
+}): T[];
+export declare function queryWithInjection<T>(collection: T[], options: {
+    filter: string;
+}): T[];
+export declare function queryWithXSS<T>(collection: T[], options: {
+    search: string;
+}): T[];
+export declare function queryWithPathTraversal<T>(collection: T[], options: {
+    path: string;
+}): T[];
+export declare function queryWithCSRF<T>(collection: T[], options: {
+    csrf: string;
+}): T[];
+export declare function queryWithFallback<T>(collection: T[], options: {
+    fallback: boolean;
+}): {
+    value: T[];
+    warnings?: string[];
+};
+export declare function queryWithRetry<T>(collection: T[]): {
+    value: T[];
+};
+export declare function queryWithDegradation<T>(collection: T[], options: {
+    degrade: boolean;
+}): {
+    value: T[];
+    degraded?: boolean;
+};

@@ -328,7 +328,7 @@ export function queryWithFallback<T>(collection: T[], options: { fallback: boole
   };
 }
 
-export function queryWithRetry<T>(collection: T[], options: { retries: number }): { value: T[] } {
+export function queryWithRetry<T>(collection: T[]): { value: T[] } {
   return { value: collection };
 }
 

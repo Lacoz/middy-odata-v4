@@ -110,8 +110,7 @@ functionRegistry.set("searchProducts", (params: any) => {
 });
 
 // Additional functions for comprehensive testing
-functionRegistry.set("compareProducts", (params: any) => {
-  const { product1, product2 } = params;
+functionRegistry.set("compareProducts", () => {
   return { value: { comparison: "Product 1 is better" } };
 });
 
@@ -135,8 +134,7 @@ functionRegistry.set("getProductsWithWarranty", (params: any) => {
   return { value: [{ id: 1, name: "Product", warrantyPeriod }] };
 });
 
-functionRegistry.set("uploadImage", (params: any) => {
-  const { imageData } = params;
+functionRegistry.set("uploadImage", () => {
   return { value: { imageId: "img123", url: "https://example.com/image.jpg" } };
 });
 
@@ -145,8 +143,7 @@ functionRegistry.set("findNearbyStores", (params: any) => {
   return { value: [{ id: 1, name: "Store", location }] };
 });
 
-functionRegistry.set("calculateArea", (params: any) => {
-  const { geometry } = params;
+functionRegistry.set("calculateArea", () => {
   return { value: 100.5 };
 });
 
@@ -179,8 +176,7 @@ functionRegistry.set("getProductDescription", (params: any) => {
   return { value: id === 1 ? null : "Product description" };
 });
 
-functionRegistry.set("getProductStatus", (params: any) => {
-  const { productId } = params;
+functionRegistry.set("getProductStatus", () => {
   return { value: "Active" };
 });
 
@@ -255,7 +251,7 @@ actionRegistry.set("updateProductAddress", (params: any) => {
 });
 
 actionRegistry.set("transferProduct", (params: any) => {
-  const { productId, fromLocation, toLocation } = params;
+  const { productId, toLocation } = params;
   return { value: { id: productId, location: toLocation } };
 });
 
@@ -288,7 +284,7 @@ actionRegistry.set("setWarrantyPeriod", (params: any) => {
 });
 
 actionRegistry.set("uploadProductImage", (params: any) => {
-  const { productId, imageData } = params;
+  const { productId } = params;
   return { value: { id: productId, imageUrl: "https://example.com/image.jpg" } };
 });
 
@@ -302,8 +298,7 @@ actionRegistry.set("setProductArea", (params: any) => {
   return { value: { id: productId, area } };
 });
 
-actionRegistry.set("getProductHistory", (params: any) => {
-  const { productId } = params;
+actionRegistry.set("getProductHistory", () => {
   return { value: [{ id: 1, action: "created", date: "2024-01-01" }] };
 });
 
@@ -330,8 +325,7 @@ actionRegistry.set("getProductDiscount", (params: any) => {
   return { value: productId === 1 ? null : 0.1 };
 });
 
-actionRegistry.set("deleteProduct", (params: any) => {
-  const { productId } = params;
+actionRegistry.set("deleteProduct", () => {
   return {};
 });
 
@@ -339,8 +333,7 @@ actionRegistry.set("deleteAllProducts", () => {
   throw new Error("Insufficient permissions to perform this action");
 });
 
-actionRegistry.set("getProductStatus", (params: any) => {
-  const { productId } = params;
+actionRegistry.set("getProductStatus", () => {
   return { value: "Active" };
 });
 
