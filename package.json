@@ -1,0 +1,44 @@
+{
+  "name": "middy-odata-v4",
+  "version": "0.0.1",
+  "type": "module",
+  "description": "Middy middleware to handle OData v4.01 query options and responses for AWS Lambda",
+  "license": "MIT",
+  "author": "",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run",
+    "dev": "vitest",
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "eslint ."
+  },
+  "packageManager": "pnpm@9.0.0",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.7.0",
+    "@typescript-eslint/parser": "^8.7.0",
+    "@vitest/coverage-v8": "^2.1.8",
+    "eslint": "^9.9.1",
+    "eslint-config-prettier": "^9.1.0",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.3.3",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7",
+    "vite-plugin-dts": "^4.3.0",
+    "vitest": "^2.1.8"
+  },
+  "dependencies": {
+    "@middy/core": "^5.0.0"
+  }
+}
