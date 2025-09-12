@@ -23,7 +23,9 @@
     "test": "vitest run",
     "dev": "vitest",
     "typecheck": "tsc -p tsconfig.json",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "semantic-release": "semantic-release",
+    "release": "semantic-release"
   },
   "packageManager": "pnpm@9.0.0",
   "devDependencies": {
@@ -46,5 +48,9 @@
   },
   "dependencies": {
     "@middy/core": "^5.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ladislav-zigo/middy-odata-v4.git"
   }
 }
