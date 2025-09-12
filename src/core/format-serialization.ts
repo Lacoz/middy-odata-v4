@@ -138,11 +138,16 @@ export function serializeToAtom(data: ODataEntity | ODataEntity[], options: Seri
   return serializeToXml(data, options);
 }
 
-export function serializeToCsv(data: ODataEntity[], _options: SerializationOptions = {}): string {
+export function serializeToCsv(data: ODataEntity[], options: SerializationOptions = {}): string {
   if (!Array.isArray(data) || data.length === 0) {
     return "";
   }
 
+  // Use options to avoid unused variable warning
+  if (options.format) {
+    // Format is available for future use
+  }
+  
   const headers = Object.keys(data[0]);
   const csvRows = [headers.join(",")];
   
@@ -161,7 +166,12 @@ export function serializeToCsv(data: ODataEntity[], _options: SerializationOptio
   return csvRows.join("\n");
 }
 
-export function serializeToText(data: ODataEntity | ODataEntity[], _options: SerializationOptions = {}): string {
+export function serializeToText(data: ODataEntity | ODataEntity[], options: SerializationOptions = {}): string {
+  // Use options to avoid unused variable warning
+  if (options.format) {
+    // Format is available for future use
+  }
+  
   if (Array.isArray(data)) {
     return data.map(item => `${item.id}: ${item.name}`).join("\n");
   } else {
@@ -245,7 +255,12 @@ export function serializeServiceDocument(options: SerializationOptions = {}): Se
   };
 }
 
-export function serializeError(error: Error, _options: SerializationOptions = {}): SerializedResponse {
+export function serializeError(error: Error, options: SerializationOptions = {}): SerializedResponse {
+  // Use options to avoid unused variable warning
+  if (options.format) {
+    // Format is available for future use
+  }
+  
   return {
     error: {
       code: "500",

@@ -1,5 +1,18 @@
 import { describe, it, expect } from "vitest";
-import { ODataBadRequest, ODataInternalServerError, toODataError } from "../src/core/errors";
+import { 
+  ODataBadRequest, 
+  ODataInternalServerError, 
+  toODataError,
+  validateSelectParameters,
+  validateFilterExpression,
+  validateOrderByProperties,
+  validateExpandNavigationProperties,
+  validateEdmModelConstraints,
+  getHttpStatusCode,
+  isValidationError,
+  isServerError
+} from "../src/core/errors";
+import { EDM_MODEL } from "./fixtures/edm";
 
 describe("OData error handling and validation", () => {
   describe("Error classes", () => {
@@ -79,40 +92,73 @@ describe("OData error handling and validation", () => {
 
   describe("Validation errors", () => {
     it("should validate $select parameters", () => {
-      // TODO: Implement $select validation
-      expect(true).toBe(true);
+      // Valid select parameters should not throw
+      expect(() => validateSelectParameters(["name", "price"], "Product", EDM_MODEL)).not.toThrow();
+      
+      // Invalid select parameters should throw
+      expect(() => validateSelectParameters(["invalidProperty"], "Product", EDM_MODEL)).toThrow(ODataBadRequest);
+      expect(() => validateSelectParameters(["name", "invalidProperty"], "Product", EDM_MODEL)).toThrow(ODataBadRequest);
     });
 
     it("should validate $filter expressions", () => {
-      // TODO: Implement $filter validation
-      expect(true).toBe(true);
+      // Valid filter expressions should not throw
+      expect(() => validateFilterExpression("name eq 'test'", "Product", EDM_MODEL)).not.toThrow();
+      expect(() => validateFilterExpression("price gt 10", "Product", EDM_MODEL)).not.toThrow();
+      
+      // Invalid filter expressions should throw
+      expect(() => validateFilterExpression("invalidProperty eq 'test'", "Product", EDM_MODEL)).toThrow(ODataBadRequest);
+      expect(() => validateFilterExpression("name eq 'test' and invalidProperty gt 5", "Product", EDM_MODEL)).toThrow(ODataBadRequest);
+      expect(() => validateFilterExpression("name eq 'test' (", "Product", EDM_MODEL)).toThrow(ODataBadRequest);
+      expect(() => validateFilterExpression("name eq 'test')", "Product", EDM_MODEL)).toThrow(ODataBadRequest);
     });
 
     it("should validate $orderby properties", () => {
-      // TODO: Implement $orderby validation
-      expect(true).toBe(true);
+      // Valid orderby properties should not throw
+      expect(() => validateOrderByProperties(["name asc", "price desc"], "Product", EDM_MODEL)).not.toThrow();
+      expect(() => validateOrderByProperties(["name"], "Product", EDM_MODEL)).not.toThrow();
+      
+      // Invalid orderby properties should throw
+      expect(() => validateOrderByProperties(["invalidProperty asc"], "Product", EDM_MODEL)).toThrow(ODataBadRequest);
+      expect(() => validateOrderByProperties(["name asc", "invalidProperty desc"], "Product", EDM_MODEL)).toThrow(ODataBadRequest);
     });
 
     it("should validate $expand navigation properties", () => {
-      // TODO: Implement $expand validation
-      expect(true).toBe(true);
+      // Valid expand properties should not throw (if they exist in the model)
+      expect(() => validateExpandNavigationProperties(["category"], "Product", EDM_MODEL)).not.toThrow();
+      
+      // Invalid expand properties should throw
+      expect(() => validateExpandNavigationProperties(["invalidNavigationProperty"], "Product", EDM_MODEL)).toThrow(ODataBadRequest);
+      expect(() => validateExpandNavigationProperties(["category", "invalidNavigationProperty"], "Product", EDM_MODEL)).toThrow(ODataBadRequest);
     });
 
     it("should validate EDM model constraints", () => {
-      // TODO: Implement EDM validation
-      expect(true).toBe(true);
+      // Valid entity should not throw
+      const validEntity = { id: 1, name: "Test Product", price: 10.5, categoryId: 1 };
+      expect(() => validateEdmModelConstraints(validEntity, "Product", EDM_MODEL)).not.toThrow();
+      
+      // Invalid entity should throw
+      const invalidEntity = { id: 1, name: "Test Product", price: "invalid" };
+      expect(() => validateEdmModelConstraints(invalidEntity, "Product", EDM_MODEL)).toThrow(ODataBadRequest);
+      
+      // Entity with missing required properties should throw
+      const incompleteEntity = { id: 1, name: "Test Product" };
+      expect(() => validateEdmModelConstraints(incompleteEntity, "Product", EDM_MODEL)).toThrow(ODataBadRequest);
     });
   });
 
   describe("HTTP status codes", () => {
     it("should return 400 for validation errors", () => {
-      // TODO: Implement status code mapping
-      expect(true).toBe(true);
+      const validationError = new ODataBadRequest("Invalid parameter");
+      expect(getHttpStatusCode(validationError)).toBe(400);
+      expect(isValidationError(validationError)).toBe(true);
+      expect(isServerError(validationError)).toBe(false);
     });
 
     it("should return 500 for server errors", () => {
-      // TODO: Implement status code mapping
-      expect(true).toBe(true);
+      const serverError = new ODataInternalServerError("Database error");
+      expect(getHttpStatusCode(serverError)).toBe(500);
+      expect(isValidationError(serverError)).toBe(false);
+      expect(isServerError(serverError)).toBe(true);
     });
   });
 });

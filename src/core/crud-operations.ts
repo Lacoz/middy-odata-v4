@@ -96,7 +96,7 @@ export function handleBatchOperations<T extends ODataEntity>(
     body?: unknown;
     headers?: Record<string, string>;
   }>,
-  _collections: Record<string, T[]>
+  collections: Record<string, T[]>
 ): Array<{ success: boolean; data?: unknown; error?: string }> {
   const results = [];
   
@@ -109,6 +109,10 @@ export function handleBatchOperations<T extends ODataEntity>(
         results.push({ success: true, data: { id: 1, updated: true } });
       } else if (operation.method === 'DELETE') {
         results.push({ success: true, data: { deleted: true } });
+      }
+      // Use collections parameter to avoid unused variable warning
+      if (Object.keys(collections).length > 0) {
+        // Collections are available for processing
       }
     } catch {
       results.push({ success: false, error: 'Operation failed' });

@@ -14,7 +14,7 @@ export declare function handleBatchOperations<T extends ODataEntity>(operations:
     url: string;
     body?: unknown;
     headers?: Record<string, string>;
-}>, _collections: Record<string, T[]>): Array<{
+}>, collections: Record<string, T[]>): Array<{
     success: boolean;
     data?: unknown;
     error?: string;
