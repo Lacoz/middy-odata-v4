@@ -1,0 +1,19 @@
+{
+  "name": "complex-odata-example",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Complex example of middy-odata-v4 usage with multiple entities and relationships",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@middy/core": "^5.0.0",
+    "middy-odata-v4": "file:../.."
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.0",
+    "typescript": "^5.0.0"
+  }
+}
