@@ -221,3 +221,37 @@ const middleware = odata({
 - Middy Third-party middleware list: https://middy.js.org/docs/middlewares/third-party/
 - OData v4.01 Protocol: https://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html
 
+
+## Publishing
+
+This package uses [semantic-release](https://github.com/semantic-release/semantic-release) for automatic versioning and publishing to npm.
+
+### How it works
+
+- **Automatic Versioning**: Version numbers are determined by conventional commit messages
+- **Automatic Publishing**: New versions are automatically published to npm when pushed to `main`
+- **Changelog Generation**: CHANGELOG.md is automatically updated with release notes
+
+### Commit Message Format
+
+Use conventional commits for automatic versioning:
+
+- `feat:` - New features (minor version bump)
+- `fix:` - Bug fixes (patch version bump)  
+- `BREAKING CHANGE:` - Breaking changes (major version bump)
+- `chore:` - Maintenance tasks (no version bump)
+
+### Manual Release
+
+To trigger a release manually:
+
+```bash
+pnpm release
+```
+
+### First Release
+
+The first release will be version `0.0.1` and will be published automatically when:
+1. Code is pushed to the `main` branch
+2. All tests pass
+3. NPM_TOKEN is configured in GitHub secrets
