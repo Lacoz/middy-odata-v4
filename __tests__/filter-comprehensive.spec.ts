@@ -5,46 +5,39 @@ import { PRODUCTS, USERS } from "./fixtures/data";
 describe("$filter - Comprehensive OData v4.01 Coverage", () => {
   describe("Comparison Operators", () => {
     it("should support eq (equals)", () => {
-      // TODO: Implement filter evaluation
-      // const result = filterArray(PRODUCTS, { filter: "price eq 10" });
-      // expect(result).toHaveLength(1);
-      // expect(result[0].price).toBe(10);
-      expect(true).toBe(true);
+      const result = filterArray(PRODUCTS, { filter: "price eq 10.5" });
+      expect(result).toHaveLength(1);
+      expect(result[0].price).toBe(10.5);
     });
 
     it("should support ne (not equals)", () => {
-      // TODO: Implement filter evaluation
-      // const result = filterArray(PRODUCTS, { filter: "price ne 10" });
-      // expect(result).toHaveLength(2);
-      expect(true).toBe(true);
+      const result = filterArray(PRODUCTS, { filter: "price ne 10.5" });
+      expect(result).toHaveLength(2);
+      expect(result.every(p => p.price !== 10.5)).toBe(true);
     });
 
     it("should support gt (greater than)", () => {
-      // TODO: Implement filter evaluation
-      // const result = filterArray(PRODUCTS, { filter: "price gt 5" });
-      // expect(result).toHaveLength(2);
-      expect(true).toBe(true);
+      const result = filterArray(PRODUCTS, { filter: "price gt 8" });
+      expect(result).toHaveLength(2);
+      expect(result.every(p => p.price > 8)).toBe(true);
     });
 
     it("should support ge (greater than or equal)", () => {
-      // TODO: Implement filter evaluation
-      // const result = filterArray(PRODUCTS, { filter: "price ge 10" });
-      // expect(result).toHaveLength(2);
-      expect(true).toBe(true);
+      const result = filterArray(PRODUCTS, { filter: "price ge 10" });
+      expect(result).toHaveLength(2);
+      expect(result.every(p => p.price >= 10)).toBe(true);
     });
 
     it("should support lt (less than)", () => {
-      // TODO: Implement filter evaluation
-      // const result = filterArray(PRODUCTS, { filter: "price lt 15" });
-      // expect(result).toHaveLength(2);
-      expect(true).toBe(true);
+      const result = filterArray(PRODUCTS, { filter: "price lt 11" });
+      expect(result).toHaveLength(2);
+      expect(result.every(p => p.price < 11)).toBe(true);
     });
 
     it("should support le (less than or equal)", () => {
-      // TODO: Implement filter evaluation
-      // const result = filterArray(PRODUCTS, { filter: "price le 10" });
-      // expect(result).toHaveLength(2);
-      expect(true).toBe(true);
+      const result = filterArray(PRODUCTS, { filter: "price le 10.5" });
+      expect(result).toHaveLength(2);
+      expect(result.every(p => p.price <= 10.5)).toBe(true);
     });
 
     it("should support has (has operator for collections)", () => {
@@ -57,17 +50,15 @@ describe("$filter - Comprehensive OData v4.01 Coverage", () => {
 
   describe("Logical Operators", () => {
     it("should support and operator", () => {
-      // TODO: Implement filter evaluation
-      // const result = filterArray(PRODUCTS, { filter: "price gt 5 and price lt 15" });
-      // expect(result).toHaveLength(1);
-      expect(true).toBe(true);
+      const result = filterArray(PRODUCTS, { filter: "price gt 5 and price lt 15" });
+      expect(result).toHaveLength(3);
+      expect(result.every(p => p.price > 5 && p.price < 15)).toBe(true);
     });
 
     it("should support or operator", () => {
-      // TODO: Implement filter evaluation
-      // const result = filterArray(PRODUCTS, { filter: "price eq 5 or price eq 20" });
-      // expect(result).toHaveLength(2);
-      expect(true).toBe(true);
+      const result = filterArray(PRODUCTS, { filter: "price eq 10.5 or price eq 7" });
+      expect(result).toHaveLength(2);
+      expect(result.some(p => p.price === 10.5) && result.some(p => p.price === 7)).toBe(true);
     });
 
     it("should support not operator", () => {
@@ -87,31 +78,27 @@ describe("$filter - Comprehensive OData v4.01 Coverage", () => {
 
   describe("String Functions", () => {
     it("should support contains function", () => {
-      // TODO: Implement filter evaluation
-      // const result = filterArray(PRODUCTS, { filter: "contains(name, 'A')" });
-      // expect(result).toHaveLength(1);
-      expect(true).toBe(true);
+      const result = filterArray(PRODUCTS, { filter: "contains(name, 'A')" });
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe("A");
     });
 
     it("should support startswith function", () => {
-      // TODO: Implement filter evaluation
-      // const result = filterArray(PRODUCTS, { filter: "startswith(name, 'A')" });
-      // expect(result).toHaveLength(1);
-      expect(true).toBe(true);
+      const result = filterArray(PRODUCTS, { filter: "startswith(name, 'A')" });
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe("A");
     });
 
     it("should support endswith function", () => {
-      // TODO: Implement filter evaluation
-      // const result = filterArray(PRODUCTS, { filter: "endswith(name, 'A')" });
-      // expect(result).toHaveLength(1);
-      expect(true).toBe(true);
+      const result = filterArray(PRODUCTS, { filter: "endswith(name, 'A')" });
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe("A");
     });
 
     it("should support length function", () => {
-      // TODO: Implement filter evaluation
-      // const result = filterArray(PRODUCTS, { filter: "length(name) eq 1" });
-      // expect(result).toHaveLength(3);
-      expect(true).toBe(true);
+      const result = filterArray(PRODUCTS, { filter: "length(name) eq 1" });
+      expect(result).toHaveLength(3);
+      expect(result.every(p => p.name.length === 1)).toBe(true);
     });
 
     it("should support indexof function", () => {

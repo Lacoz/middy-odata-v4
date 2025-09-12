@@ -5,23 +5,19 @@ import { EDM_MODEL } from "./fixtures/edm";
 describe("OData v4.01 Metadata and Service Document", () => {
   describe("Service Document", () => {
     it("should generate valid service document", () => {
-      // TODO: Implement service document generation
-      // const serviceDoc = generateServiceDocument(EDM_MODEL, "https://api.example.com/odata");
-      // expect(serviceDoc).toHaveProperty("@odata.context");
-      // expect(serviceDoc["@odata.context"]).toBe("https://api.example.com/odata/$metadata");
-      // expect(serviceDoc).toHaveProperty("value");
-      // expect(Array.isArray(serviceDoc.value)).toBe(true);
-      expect(true).toBe(true);
+      const serviceDoc = generateServiceDocument(EDM_MODEL, "https://api.example.com/odata");
+      expect(serviceDoc).toHaveProperty("@odata.context");
+      expect(serviceDoc["@odata.context"]).toBe("https://api.example.com/odata/$metadata");
+      expect(serviceDoc).toHaveProperty("value");
+      expect(Array.isArray(serviceDoc.value)).toBe(true);
     });
 
     it("should include all entity sets in service document", () => {
-      // TODO: Implement service document generation
-      // const serviceDoc = generateServiceDocument(EDM_MODEL, "https://api.example.com/odata");
-      // expect(serviceDoc.value).toHaveLength(EDM_MODEL.entitySets.length);
-      // expect(serviceDoc.value[0]).toHaveProperty("name");
-      // expect(serviceDoc.value[0]).toHaveProperty("kind");
-      // expect(serviceDoc.value[0].kind).toBe("EntitySet");
-      expect(true).toBe(true);
+      const serviceDoc = generateServiceDocument(EDM_MODEL, "https://api.example.com/odata");
+      expect(serviceDoc.value).toHaveLength(EDM_MODEL.entitySets.length);
+      expect(serviceDoc.value[0]).toHaveProperty("name");
+      expect(serviceDoc.value[0]).toHaveProperty("kind");
+      expect(serviceDoc.value[0].kind).toBe("EntitySet");
     });
 
     it("should include singleton entities in service document", () => {
@@ -62,12 +58,12 @@ describe("OData v4.01 Metadata and Service Document", () => {
 
   describe("Metadata Document", () => {
     it("should generate valid metadata document", () => {
-      // TODO: Implement metadata generation
-      // const metadata = generateMetadata(EDM_MODEL, "https://api.example.com/odata");
-      // expect(metadata).toHaveProperty("@odata.context");
-      // expect(metadata["@odata.context"]).toBe("https://api.example.com/odata/$metadata");
-      // expect(metadata).toHaveProperty("@odata.metadataEtag");
-      expect(true).toBe(true);
+      const metadata = generateMetadata(EDM_MODEL, "https://api.example.com/odata");
+      expect(metadata).toHaveProperty("@odata.context");
+      expect(metadata["@odata.context"]).toBe("https://api.example.com/odata/$metadata");
+      expect(metadata).toHaveProperty("@odata.metadataEtag");
+      expect(metadata).toHaveProperty("$Version");
+      expect(metadata["$Version"]).toBe("4.01");
     });
 
     it("should include schema with correct namespace", () => {

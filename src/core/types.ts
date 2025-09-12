@@ -31,22 +31,91 @@ export interface EdmEntityType {
 export interface EdmEntitySet {
   name: string;
   entityType: string;
+  title?: string;
+}
+
+export interface EdmComplexType {
+  name: string;
+  properties: EdmProperty[];
+}
+
+export interface EdmEnumMember {
+  name: string;
+  value: number;
+}
+
+export interface EdmEnumType {
+  name: string;
+  underlyingType?: string;
+  members: EdmEnumMember[];
+}
+
+export interface EdmFunctionParameter {
+  name: string;
+  type: string;
+}
+
+export interface EdmFunction {
+  name: string;
+  parameters?: EdmFunctionParameter[];
+  returnType?: string;
+}
+
+export interface EdmAction {
+  name: string;
+  parameters?: EdmFunctionParameter[];
+  returnType?: string;
+}
+
+export interface EdmFunctionImport {
+  name: string;
+  function: string;
+  title?: string;
+}
+
+export interface EdmActionImport {
+  name: string;
+  action: string;
+  title?: string;
+}
+
+export interface EdmSingleton {
+  name: string;
+  entityType: string;
+  title?: string;
 }
 
 export interface EdmModel {
   namespace: string;
   entityTypes: EdmEntityType[];
   entitySets: EdmEntitySet[];
+  complexTypes?: EdmComplexType[];
+  enumTypes?: EdmEnumType[];
+  functions?: EdmFunction[];
+  actions?: EdmAction[];
+  functionImports?: EdmFunctionImport[];
+  actionImports?: EdmActionImport[];
+  singletons?: EdmSingleton[];
+  containerName?: string;
+  extends?: string;
+}
+
+export interface ODataExpandItem {
+  path: string;
+  options?: ODataQueryOptions;
 }
 
 export interface ODataQueryOptions {
   select?: string[];
-  expand?: Record<string, ODataQueryOptions>;
+  expand?: ODataExpandItem[];
   filter?: string;
   orderby?: { property: string; direction: "asc" | "desc" }[];
   top?: number;
   skip?: number;
   count?: boolean;
+  search?: string;
+  compute?: string[];
+  apply?: string;
 }
 
 export interface ODataRequestContext {
