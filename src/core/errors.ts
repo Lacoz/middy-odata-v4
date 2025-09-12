@@ -1,4 +1,4 @@
-import type { ODataErrorPayload, ODataQueryOptions, EdmModel } from "./types";
+import type { ODataErrorPayload, EdmModel } from "./types";
 
 export class ODataBadRequest extends Error {
   statusCode = 400;
