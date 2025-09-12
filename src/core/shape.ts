@@ -16,6 +16,7 @@ export function expandData<T extends Record<string, any>>(
   data: T | T[],
   options: ODataQueryOptions
 ): T | T[] {
-  // Placeholder implementation
+  // Placeholder implementation - options will be used when expand is implemented
+  void options;
   return data;
 }

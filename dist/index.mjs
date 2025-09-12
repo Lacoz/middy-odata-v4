@@ -33,14 +33,14 @@ function g(t) {
     }
   };
 }
-class S extends Error {
+class x extends Error {
   constructor() {
     super(...arguments);
     u(this, "statusCode", 400);
     u(this, "code", "BadRequest");
   }
 }
-class x extends Error {
+class S extends Error {
   constructor() {
     super(...arguments);
     u(this, "statusCode", 500);
@@ -64,9 +64,12 @@ function C(t, r) {
   return t.map((e) => v(e, r.select));
 }
 function R(t, r) {
-  return r.filter, t;
+  return t;
 }
 function $(t, r) {
+  return r.filter, t;
+}
+function h(t, r) {
   if (!r.orderby || r.orderby.length === 0) return t;
   const e = [...t];
   return e.sort((n, i) => {
@@ -82,11 +85,11 @@ function $(t, r) {
     return 0;
   }), e;
 }
-function h(t, r) {
+function O(t, r) {
   const e = r.skip ?? 0, n = r.top ?? t.length;
   return t.slice(e, e + n);
 }
-function O(t, r, e, n) {
+function k(t, r, e, n) {
   const i = {
     "@odata.context": t,
     value: r
@@ -94,16 +97,17 @@ function O(t, r, e, n) {
   return typeof e == "number" && (i["@odata.count"] = e), n && (i["@odata.nextLink"] = n), i;
 }
 export {
-  S as ODataBadRequest,
-  x as ODataInternalServerError,
+  x as ODataBadRequest,
+  S as ODataInternalServerError,
   v as applySelect,
-  R as filterArray,
+  R as expandData,
+  $ as filterArray,
   g as odata,
-  $ as orderArray,
-  h as paginateArray,
+  h as orderArray,
+  O as paginateArray,
   y as parseODataQuery,
   C as projectArray,
-  O as serializeCollection,
+  k as serializeCollection,
   E as toODataError
 };
 //# sourceMappingURL=index.mjs.map
