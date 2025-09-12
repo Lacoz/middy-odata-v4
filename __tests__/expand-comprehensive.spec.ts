@@ -6,16 +6,18 @@ describe("$expand - Comprehensive OData v4.01 Coverage", () => {
   describe("Basic Expansion", () => {
     it("should expand single navigation property", () => {
       const result = expandData(PRODUCTS, { expand: [{ path: "category" }] });
-      expect(result[0]).toHaveProperty("category");
-      expect(result[0].category).toBeNull(); // Placeholder implementation
+      expect(Array.isArray(result)).toBe(true);
+      expect((result as any[])[0]).toHaveProperty("category");
+      expect((result as any[])[0].category).toBeNull(); // Placeholder implementation
     });
 
     it("should expand multiple navigation properties", () => {
       const result = expandData(PRODUCTS, { expand: [{ path: "category" }, { path: "supplier" }] });
-      expect(result[0]).toHaveProperty("category");
-      expect(result[0]).toHaveProperty("supplier");
-      expect(result[0].category).toBeNull(); // Placeholder implementation
-      expect(result[0].supplier).toBeNull(); // Placeholder implementation
+      expect(Array.isArray(result)).toBe(true);
+      expect((result as any[])[0]).toHaveProperty("category");
+      expect((result as any[])[0]).toHaveProperty("supplier");
+      expect((result as any[])[0].category).toBeNull(); // Placeholder implementation
+      expect((result as any[])[0].supplier).toBeNull(); // Placeholder implementation
     });
 
     it("should handle non-existent navigation properties gracefully", () => {

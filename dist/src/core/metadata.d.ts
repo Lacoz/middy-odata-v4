@@ -1,2 +1,3 @@
-export declare function generateMetadata(model: any, serviceRoot: string): any;
-export declare function generateServiceDocument(model: any, serviceRoot: string): any;
+import { EdmModel } from './types';
+export declare function generateMetadata(model: EdmModel, serviceRoot: string): any;
+export declare function generateServiceDocument(model: EdmModel, serviceRoot: string): any;

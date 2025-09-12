@@ -21,10 +21,10 @@ export function expandData<T extends Record<string, any>>(
   }
 
   if (Array.isArray(data)) {
-    return data.map(item => expandData(item, options));
+    return data.map(item => expandData(item, options) as T);
   }
 
-  const expanded = { ...data };
+  const expanded = { ...data } as any;
   
   for (const expandItem of options.expand) {
     const navigationProperty = expandItem.path;
@@ -45,5 +45,5 @@ export function expandData<T extends Record<string, any>>(
     }
   }
   
-  return expanded;
+  return expanded as T;
 }

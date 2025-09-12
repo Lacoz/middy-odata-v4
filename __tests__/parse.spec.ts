@@ -21,6 +21,6 @@ describe("parseODataQuery", () => {
   it("parses $filter and $expand minimally", () => {
     const q = parseODataQuery({ "$filter": "price gt 10", "$expand": "category" });
     expect(q.filter).toBe("price gt 10");
-    expect(q.expand).toEqual({ category: {} });
+    expect(q.expand).toEqual([{ path: "category" }]);
   });
 });

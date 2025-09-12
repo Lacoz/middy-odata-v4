@@ -21,7 +21,7 @@ export function parseODataQuery(query: Record<string, string | undefined>): ODat
   if (filter) opts.filter = filter;
   const expand = query["$expand"];
   if (expand) {
-    opts.expand = Object.fromEntries(expand.split(",").map((e) => [e.trim(), {}]));
+    opts.expand = expand.split(",").map((e) => ({ path: e.trim() }));
   }
   return opts;
 }
