@@ -1,5 +1,9 @@
 # middy-odata-v4
 
+[![CI](https://github.com/ladislav-zigo/middy-odata-v4/actions/workflows/ci.yml/badge.svg)](https://github.com/ladislav-zigo/middy-odata-v4/actions/workflows/ci.yml)
+
+# middy-odata-v4
+
 Middy middleware for AWS Lambda that parses and applies OData v4.01 query options and produces OData-compliant responses. This repository starts with a complete, test-first plan and suite to verify OData 4.01 core behaviors relevant to typical REST-backed collections.
 
 - Middy third-party middlewares reference: [Third-party middlewares](https://middy.js.org/docs/middlewares/third-party/)
@@ -134,390 +138,83 @@ For errors:
 
 🔄 **In Progress**: Full OData v4.01 implementation to make all tests pass with real functionality
 
-## Getting Started
-
-### Installation
+## Quick Start
 
 ```bash
 npm install middy-odata-v4 @middy/core
-# or
-pnpm add middy-odata-v4 @middy/core
-# or
-yarn add middy-odata-v4 @middy/core
 ```
-
-### Basic Setup
-
-1. **Define your EDM Model**: Create a data model that describes your entities and their relationships.
-
-```ts
-import type { EdmModel } from "middy-odata-v4";
-
-const model: EdmModel = {
-  namespace: "MyApp",
-  entityTypes: [
-    {
-      name: "Product",
-      key: ["id"],
-      properties: [
-        { name: "id", type: "Edm.Int32" },
-        { name: "name", type: "Edm.String" },
-        { name: "price", type: "Edm.Decimal" },
-        { name: "categoryId", type: "Edm.Int32" },
-      ],
-      navigation: [
-        { name: "category", target: "Category", collection: false },
-      ],
-    },
-    {
-      name: "Category",
-      key: ["id"],
-      properties: [
-        { name: "id", type: "Edm.Int32" },
-        { name: "title", type: "Edm.String" },
-      ],
-    },
-  ],
-  entitySets: [
-    { name: "Products", entityType: "Product" },
-    { name: "Categories", entityType: "Category" },
-  ],
-};
-```
-
-2. **Create your Lambda handler**: Use the middleware to automatically parse OData query options.
-
-```ts
-import middy from "@middy/core";
-import { odata } from "middy-odata-v4";
-
-const handler = middy(async (event, context) => {
-  // Access parsed OData options
-  const { options } = event.internal.odata;
-  
-  // Your data fetching logic
-  const products = await getProductsFromDatabase();
-  
-  // Return data - middleware will handle OData formatting
-  return {
-    entitySet: "Products",
-    data: products,
-  };
-}).use(odata({ 
-  model, 
-  serviceRoot: "https://api.example.com/odata" 
-}));
-
-export { handler };
-```
-
-### Configuration Options
-
-```ts
-const middleware = odata({
-  // Required: Your EDM model
-  model: myEdmModel,
-  
-  // Required: Base URL for OData service
-  serviceRoot: "https://api.example.com/odata",
-  
-  // Optional: Enable advanced OData features
-  enable: {
-    compute: false,    // Enable $compute queries
-    apply: false,      // Enable $apply aggregation
-    search: false,     // Enable $search queries
-  },
-  
-  // Optional: Pagination defaults
-  defaults: {
-    maxTop: 1000,      // Maximum items per page
-    defaultTop: 50,    // Default page size
-  },
-});
-```
-
-### Dynamic Service Root
-
-You can provide a function to dynamically determine the service root:
-
-```ts
-const middleware = odata({
-  model,
-  serviceRoot: (event) => {
-    const host = event.headers?.host || "api.example.com";
-    return `https://${host}/odata`;
-  },
-});
-```
-
-### Accessing OData Context
-
-The middleware attaches parsed OData options to `request.internal.odata`:
-
-```ts
-const handler = middy(async (event, context) => {
-  const odataContext = event.internal.odata;
-  
-  console.log("Selected fields:", odataContext.options.select);
-  console.log("Filter expression:", odataContext.options.filter);
-  console.log("Order by:", odataContext.options.orderby);
-  console.log("Page size:", odataContext.options.top);
-  console.log("Skip count:", odataContext.options.skip);
-  console.log("Include count:", odataContext.options.count);
-  console.log("Expanded navigation:", odataContext.options.expand);
-  
-  // Your handler logic here
-});
-```
-
-### Example API Gateway Integration
-
-```ts
-// For API Gateway REST API
-const restHandler = middy(async (event) => {
-  const { options } = event.internal.odata;
-  
-  // Query parameters are automatically parsed
-  // event.queryStringParameters.$select -> options.select
-  // event.queryStringParameters.$filter -> options.filter
-  // etc.
-  
-  return {
-    statusCode: 200,
-    body: JSON.stringify({
-      entitySet: "Products",
-      data: await getProducts(options),
-    }),
-  };
-}).use(odata({ model, serviceRoot: "https://api.example.com/odata" }));
-
-// For API Gateway HTTP API
-const httpHandler = middy(async (event) => {
-  const { options } = event.internal.odata;
-  
-  // Raw query string is automatically parsed
-  // event.rawQueryString -> parsed options
-  
-  return {
-    statusCode: 200,
-    body: JSON.stringify({
-      entitySet: "Products", 
-      data: await getProducts(options),
-    }),
-  };
-}).use(odata({ model, serviceRoot: "https://api.example.com/odata" }));
-```
-
-### Supported OData Query Options
-
-The middleware currently supports parsing these OData v4.01 query options:
-
-- **$select**: Field selection (`$select=id,name,price`)
-- **$filter**: Filtering expressions (`$filter=price gt 10`)
-- **$orderby**: Sorting (`$orderby=name asc,price desc`)
-- **$top**: Page size (`$top=50`)
-- **$skip**: Skip count (`$skip=100`)
-- **$count**: Include total count (`$count=true`)
-- **$expand**: Navigation property expansion (`$expand=category`)
-
-### Error Handling
-
-The middleware provides OData-compliant error responses:
-
-```ts
-import { ODataBadRequest, ODataInternalServerError } from "middy-odata-v4";
-
-const handler = middy(async (event) => {
-  try {
-    // Your logic here
-  } catch (error) {
-    // Middleware will format errors according to OData standards
-    throw new ODataBadRequest("Invalid query parameter");
-  }
-}).use(odata({ model, serviceRoot }));
-```
-
-### Complete Example
-
-Here's a complete example of a Lambda function that serves OData queries:
 
 ```ts
 import middy from "@middy/core";
 import { odata, type EdmModel } from "middy-odata-v4";
 
-// Define your data model
 const model: EdmModel = {
-  namespace: "ECommerce",
-  entityTypes: [
-    {
-      name: "Product",
-      key: ["id"],
-      properties: [
-        { name: "id", type: "Edm.Int32" },
-        { name: "name", type: "Edm.String" },
-        { name: "price", type: "Edm.Decimal" },
-        { name: "categoryId", type: "Edm.Int32" },
-        { name: "inStock", type: "Edm.Boolean" },
-      ],
-      navigation: [
-        { name: "category", target: "Category", collection: false },
-      ],
-    },
-    {
-      name: "Category",
-      key: ["id"],
-      properties: [
-        { name: "id", type: "Edm.Int32" },
-        { name: "name", type: "Edm.String" },
-        { name: "description", type: "Edm.String" },
-      ],
-    },
-  ],
-  entitySets: [
-    { name: "Products", entityType: "Product" },
-    { name: "Categories", entityType: "Category" },
-  ],
+  namespace: "MyApp",
+  entityTypes: [{
+    name: "User",
+    key: ["id"],
+    properties: [
+      { name: "id", type: "Edm.Int32" },
+      { name: "name", type: "Edm.String" },
+      { name: "email", type: "Edm.String" },
+    ],
+  }],
+  entitySets: [{ name: "Users", entityType: "User" }],
 };
 
-// Mock data source
-const products = [
-  { id: 1, name: "Laptop", price: 999.99, categoryId: 1, inStock: true },
-  { id: 2, name: "Mouse", price: 29.99, categoryId: 1, inStock: true },
-  { id: 3, name: "Keyboard", price: 79.99, categoryId: 1, inStock: false },
-];
-
-const categories = [
-  { id: 1, name: "Electronics", description: "Electronic devices" },
-  { id: 2, name: "Books", description: "Books and literature" },
-];
-
-// Lambda handler with OData middleware
-const handler = middy(async (event, context) => {
+const handler = middy(async (event) => {
   const { options } = event.internal.odata;
   
-  // Apply OData query options to your data
-  let result = [...products];
+  // Your data logic here
+  const users = await getUsers(options);
   
-  // Apply filtering (simplified example)
-  if (options.filter) {
-    // In a real implementation, you'd parse and apply the filter
-    console.log("Filter expression:", options.filter);
-  }
-  
-  // Apply ordering
-  if (options.orderby) {
-    result.sort((a, b) => {
-      for (const term of options.orderby!) {
-        const aVal = a[term.property];
-        const bVal = b[term.property];
-        if (aVal < bVal) return term.direction === "asc" ? -1 : 1;
-        if (aVal > bVal) return term.direction === "asc" ? 1 : -1;
-      }
-      return 0;
-    });
-  }
-  
-  // Apply pagination
-  if (options.skip) {
-    result = result.slice(options.skip);
-  }
-  if (options.top) {
-    result = result.slice(0, options.top);
-  }
-  
-  // Apply field selection
-  if (options.select) {
-    result = result.map(item => {
-      const selected: any = {};
-      for (const field of options.select!) {
-        if (field in item) {
-          selected[field] = item[field];
-        }
-      }
-      return selected;
-    });
-  }
-  
-  // Return OData-compliant response
   return {
     statusCode: 200,
-    headers: {
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify({
-      "@odata.context": `${event.internal.odata.serviceRoot}/$metadata#Products`,
-      value: result,
-      ...(options.count && { "@odata.count": products.length }),
+      "@odata.context": `${event.internal.odata.serviceRoot}/$metadata#Users`,
+      value: users,
     }),
   };
-}).use(odata({
-  model,
-  serviceRoot: "https://api.example.com/odata",
-  defaults: {
-    maxTop: 100,
-    defaultTop: 20,
-  },
-}));
+}).use(odata({ model, serviceRoot: "https://api.example.com/odata" }));
 
 export { handler };
 ```
 
-### Example Queries
+## Configuration
 
-With the above handler, you can make OData queries like:
-
-```bash
-# Get all products
-GET /products
-
-# Get specific fields only
-GET /products?$select=id,name,price
-
-# Filter products
-GET /products?$filter=price gt 50
-
-# Sort products
-GET /products?$orderby=price desc
-
-# Paginate results
-GET /products?$top=10&$skip=20
-
-# Include total count
-GET /products?$count=true
-
-# Combine multiple options
-GET /products?$select=id,name&$filter=inStock eq true&$orderby=name asc&$top=5
+```ts
+const middleware = odata({
+  model: myEdmModel,
+  serviceRoot: "https://api.example.com/odata",
+  enable: { compute: false, apply: false, search: false },
+  defaults: { maxTop: 1000, defaultTop: 50 },
+});
 ```
 
-## Middleware Structure
+## Supported Query Options
 
-This middleware follows [Middy's middleware writing guidelines](https://middy.js.org/docs/category/writing-middlewares):
+- `$select` - Field selection
+- `$filter` - Filtering expressions  
+- `$orderby` - Sorting
+- `$top` / `$skip` - Pagination
+- `$count` - Include total count
+- `$expand` - Navigation property expansion
 
-- **Configurable**: Exported as a function that accepts options
-- **Before Phase**: Parses OData query options and attaches to `request.internal.odata`
-- **Internal Storage**: Uses `request.internal` for secure data sharing between middlewares
-- **TypeScript Support**: Fully typed with proper interfaces
+## Examples
 
-The middleware currently implements the `before` phase to parse and validate OData query options, making them available to your handler via `request.internal.odata`.
+- **[Simple Example](examples/simple/)** - Basic user management API
+- **[Complex Example](examples/complex/)** - E-commerce system with multiple entities
 
-## Middleware Evaluation
+## Implementation Status
 
-Based on [Middy's middleware writing guidelines](https://middy.js.org/docs/category/writing-middlewares), our implementation correctly follows the standard pattern:
+✅ **Completed**: Test suite (63 tests), basic middleware structure, query parsing, data shaping, serialization, error handling
 
-### ✅ Correctly Implemented
-- **Configurable Function**: Exported as `odata(options)` that accepts configuration
-- **Middleware Object**: Returns object with `before` function
-- **Request Access**: Properly accesses and modifies `request.event` and `request.internal`
-- **Internal Storage**: Uses `request.internal.odata` for secure data sharing
-- **TypeScript Support**: Fully typed with proper interfaces
+🔄 **In Progress**: Full OData v4.01 implementation to make all tests pass with real functionality
 
-### 🔄 Next Steps for Full Implementation
+### Next Steps
 - **After Phase**: Implement response processing to apply OData transformations
-- **Error Handling**: Add `onError` phase for OData error formatting
-- **Timeout Handling**: Implement AbortController integration for Lambda timeouts
-- **Full OData Logic**: Complete the actual OData v4.01 functionality to make tests pass
-
-The current implementation provides a solid foundation that follows Middy standards and can be extended with the remaining OData functionality.
+- **Error Handling**: Add `onError` phase for OData error formatting  
+- **Full OData Logic**: Complete the actual OData v4.01 functionality
 
 ## References
 
