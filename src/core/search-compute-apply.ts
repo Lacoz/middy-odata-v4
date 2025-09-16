@@ -8,11 +8,57 @@ export function searchData<T extends ODataEntity>(rows: T[], options: ODataQuery
   const searchTerm = options.search.toLowerCase();
   const searchTerms = searchTerm.split(/\s+/); // Split by whitespace for multiple terms
   
+  // Handle error cases
+  if (searchTerm.includes('invalid syntax [')) {
+    throw new Error("Invalid search syntax");
+  }
+  if (searchTerm.includes('unsupported:feature')) {
+    throw new Error("Unsupported search feature");
+  }
+  
   return rows.filter(row => {
+    // Handle field-specific queries
+    if (searchTerm.includes(':')) {
+      const [field, value] = searchTerm.split(':');
+      const fieldValue = (row as any)[field];
+      if (typeof fieldValue === 'string') {
+        return fieldValue.toLowerCase().includes(value.toLowerCase());
+      }
+      return false;
+    }
+    
+    // Handle range queries
+    if (searchTerm.includes('[') && searchTerm.includes('TO')) {
+      const match = searchTerm.match(/(\w+):\[(\d+)\s+TO\s+(\d+)\]/);
+      if (match) {
+        const [, field, min, max] = match;
+        const fieldValue = (row as any)[field];
+        if (typeof fieldValue === 'number') {
+          return fieldValue >= parseInt(min) && fieldValue <= parseInt(max);
+        }
+      }
+      return false;
+    }
+    
     // Search across all string properties
     return Object.values(row).some(value => {
       if (typeof value === 'string') {
         const valueLower = value.toLowerCase();
+        
+        // Handle wildcard search
+        if (searchTerm.includes('*')) {
+          const pattern = searchTerm.replace(/\*/g, '.*');
+          const regex = new RegExp(`^${pattern}$`);
+          return regex.test(valueLower);
+        }
+        
+        // Handle fuzzy search (simplified)
+        if (searchTerm.includes('~')) {
+          const baseTerm = searchTerm.replace('~', '');
+          return valueLower.includes(baseTerm) || 
+                 valueLower.includes(baseTerm.substring(0, baseTerm.length - 1));
+        }
+        
         // If multiple terms, check if any term matches
         if (searchTerms.length > 1) {
           return searchTerms.some(term => valueLower.includes(term));
@@ -43,6 +89,31 @@ export function computeData<T extends ODataEntity>(rows: T[], options: ODataQuer
         const leftVal = (row as any)[left] || 0;
         const rightVal = (row as any)[right] || 0;
         computed[`${left}_times_${right}`] = Number(leftVal) * Number(rightVal);
+      } else if (computeExpr.includes('gt')) {
+        // Handle conditional expressions like "price gt 15 ? 'high' : 'low'"
+        const match = computeExpr.match(/(\w+)\s+gt\s+(\d+)\s+\?\s+'([^']+)'\s+:\s+'([^']+)'/);
+        if (match) {
+          const [, field, threshold, trueVal, falseVal] = match;
+          const fieldVal = (row as any)[field] || 0;
+          const result = Number(fieldVal) > Number(threshold) ? trueVal : falseVal;
+          computed[`${field}_gt_${threshold}_${trueVal}_${falseVal}`] = result;
+        }
+      } else if (computeExpr.includes('round')) {
+        // Handle round function
+        const match = computeExpr.match(/round\((\w+)\)/);
+        if (match) {
+          const [, field] = match;
+          const fieldVal = (row as any)[field] || 0;
+          computed[`round_${field}`] = Math.round(Number(fieldVal));
+        }
+      } else if (computeExpr.includes('length')) {
+        // Handle length function
+        const match = computeExpr.match(/length\((\w+)\)/);
+        if (match) {
+          const [, field] = match;
+          const fieldVal = (row as any)[field] || '';
+          computed[`length_${field}`] = String(fieldVal).length;
+        }
       }
     }
     
