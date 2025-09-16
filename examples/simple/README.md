@@ -17,7 +17,13 @@ cd docker-test
 ./test.sh
 ```
 
-**Note**: The `deploy` script creates a `docker-test/deployment/` directory for testing. This is a build artifact and can be safely deleted.
+## Deploy to AWS Lambda
+
+1. Upload `simple-odata-example.zip` to AWS Lambda
+2. Set handler to: `index.handler`
+3. Set runtime to: Node.js 22.x
+
+**Note**: The `deploy` script creates build artifacts (`deployment/` folder and `*.zip` file) that can be safely deleted after deployment.
 
 ## API Endpoints
 

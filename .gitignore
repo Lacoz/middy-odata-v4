@@ -4,3 +4,5 @@ dist/
 .DS_Store
 examples/*/extracted/
 examples/*/node_modules/
+examples/*/deployment/
+examples/*/*.zip

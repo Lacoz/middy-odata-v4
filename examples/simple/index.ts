@@ -26,8 +26,14 @@ const model: EdmModel = {
 };
 
 // Main Lambda handler
-export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  const path = event.path;
+export const handler = async (event: any): Promise<APIGatewayProxyResult> => {
+  // Handle both API Gateway and Lambda URL event formats
+  const path = event.path || event.rawPath || '/';
+  const method = event.httpMethod || event.requestContext?.http?.method || 'GET';
+  
+  // Debug: log the event to understand what we're receiving
+  console.log('Event received:', JSON.stringify(event, null, 2));
+  console.log('Path:', path, 'Method:', method);
 
   // OData metadata endpoint
   if (path === '/$metadata') {

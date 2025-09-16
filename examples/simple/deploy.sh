@@ -3,17 +3,29 @@
 echo "Building simple example..."
 pnpm run build
 
-echo "Preparing for Docker testing..."
+echo "Creating deployment package..."
 
-# Create docker-test deployment directory
-mkdir -p docker-test/deployment
-cp dist/index.mjs docker-test/deployment/
-cp package.json docker-test/deployment/
+# Create deployment directory
+mkdir -p deployment
+cp dist/index.mjs deployment/
+cp package.json deployment/
 
 # Copy only the middy-odata-v4 library
-mkdir -p docker-test/deployment/node_modules/middy-odata-v4/dist
-cp -r ../../dist/* docker-test/deployment/node_modules/middy-odata-v4/dist/
-cp ../../package.json docker-test/deployment/node_modules/middy-odata-v4/
+mkdir -p deployment/node_modules/middy-odata-v4/dist
+cp -r ../../dist/* deployment/node_modules/middy-odata-v4/dist/
+cp ../../package.json deployment/node_modules/middy-odata-v4/
 
-echo "✅ Ready for Docker testing in 'docker-test/deployment/' directory"
-echo "Handler: index.handler"
+# Create zip file for AWS Lambda
+echo "Creating zip file for AWS Lambda..."
+cd deployment
+zip -r ../simple-odata-example.zip . -x "*.DS_Store" "*.log"
+cd ..
+
+# Copy to docker-test for local testing
+echo "Preparing for Docker testing..."
+cp -r deployment docker-test/
+
+echo "✅ Deployment package ready:"
+echo "   📦 simple-odata-example.zip (for AWS Lambda)"
+echo "   📁 docker-test/deployment/ (for local testing)"
+echo "   Handler: index.handler"

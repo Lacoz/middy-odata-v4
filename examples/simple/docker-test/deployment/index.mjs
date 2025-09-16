@@ -23,7 +23,12 @@ const model = {
 };
 // Main Lambda handler
 export const handler = async (event) => {
-    const path = event.path;
+    // Handle both API Gateway and Lambda URL event formats
+    const path = event.path || event.rawPath || '/';
+    const method = event.httpMethod || event.requestContext?.http?.method || 'GET';
+    // Debug: log the event to understand what we're receiving
+    console.log('Event received:', JSON.stringify(event, null, 2));
+    console.log('Path:', path, 'Method:', method);
     // OData metadata endpoint
     if (path === '/$metadata') {
         const metadata = generateMetadata(model, 'https://api.example.com/odata');
