@@ -1,0 +1,258 @@
+import { serializeCollection } from "../core/serialize";
+import { mergeMiddlewareOptions, getMiddlewareContext, setMiddlewareContext } from "./compose";
+const DEFAULT_SERIALIZE_OPTIONS = {
+    format: "json",
+    includeMetadata: true,
+    prettyPrint: false,
+};
+/**
+ * OData Serialize Middleware
+ *
+ * Responsibilities:
+ * - Format response data according to OData standards
+ * - Add @odata.context and other metadata annotations
+ * - Handle different response formats (JSON, XML, ATOM)
+ * - Ensure proper OData response structure
+ * - Add ETags and other HTTP headers
+ */
+export function odataSerialize(options = {}) {
+    const opts = mergeMiddlewareOptions(DEFAULT_SERIALIZE_OPTIONS, options);
+    return {
+        after: async (request) => {
+            try {
+                const context = getMiddlewareContext(request);
+                if (!context) {
+                    return; // No OData context, skip serialization
+                }
+                // Get response data
+                let responseData = request.response?.body;
+                if (typeof responseData === 'string') {
+                    try {
+                        responseData = JSON.parse(responseData);
+                    }
+                    catch {
+                        // If parsing fails, skip serialization
+                        return;
+                    }
+                }
+                if (!responseData) {
+                    return; // No data to serialize
+                }
+                // Apply OData serialization
+                const serializedData = await applySerialization(responseData, context, opts, request);
+                // Update response
+                if (request.response) {
+                    request.response.body = JSON.stringify(serializedData);
+                    // Add OData-specific headers
+                    addODataHeaders(request.response, context, opts);
+                }
+                else {
+                    request.response = {
+                        statusCode: 200,
+                        body: JSON.stringify(serializedData),
+                        headers: {},
+                    };
+                    // Add OData-specific headers
+                    addODataHeaders(request.response, context, opts);
+                }
+                // Update context with serialized data
+                context.data = serializedData;
+                setMiddlewareContext(request, context);
+            }
+            catch (error) {
+                // If serialization fails, log error but don't break the response
+                console.error('[OData Serialize] Error applying serialization:', error);
+                // Continue with original response
+            }
+        },
+    };
+}
+/**
+ * Applies OData serialization to response data
+ * @param data Response data to serialize
+ * @param context OData middleware context
+ * @param options Serialize options
+ * @param request Middy request object
+ * @returns Serialized data
+ */
+async function applySerialization(data, context, options, request) {
+    const { options: queryOptions } = context;
+    // Handle collection responses
+    if (Array.isArray(data)) {
+        return await serializeCollectionResponse(data, queryOptions, options, context, request);
+    }
+    // Handle single entity responses
+    if (data && typeof data === 'object') {
+        return await serializeEntityResponse(data, queryOptions, options, context);
+    }
+    // Handle primitive responses
+    return await serializePrimitiveResponse(data, options, context);
+}
+/**
+ * Serializes a collection response
+ * @param entities Array of entities
+ * @param queryOptions OData query options
+ * @param options Serialize options
+ * @param context OData middleware context
+ * @param request Middy request object
+ * @returns Serialized collection response
+ */
+async function serializeCollectionResponse(entities, queryOptions, options, context, request) {
+    const contextUrl = generateContextUrl(context);
+    const count = queryOptions.count ? entities.length : undefined;
+    const nextLink = generateNextLink(context, request);
+    // Use the existing serializeCollection function if available
+    if (typeof serializeCollection === 'function') {
+        return serializeCollection(contextUrl, entities, count, nextLink);
+    }
+    // Fallback implementation
+    const result = {
+        "@odata.context": contextUrl,
+        value: entities,
+    };
+    if (count !== undefined) {
+        result["@odata.count"] = count;
+    }
+    if (nextLink) {
+        result["@odata.nextLink"] = nextLink;
+    }
+    return result;
+}
+/**
+ * Serializes a single entity response
+ * @param entity Entity to serialize
+ * @param queryOptions OData query options
+ * @param options Serialize options
+ * @param context OData middleware context
+ * @param request Middy request object
+ * @returns Serialized entity response
+ */
+async function serializeEntityResponse(entity, queryOptions, options, context) {
+    const result = { ...entity };
+    // Add @odata.context if not present
+    if (!result["@odata.context"]) {
+        result["@odata.context"] = generateContextUrl(context);
+    }
+    // Add @odata.etag if entity has a version property
+    if (entity.version && !result["@odata.etag"]) {
+        result["@odata.etag"] = `"${entity.version}"`;
+    }
+    // Add @odata.id if entity has an id property
+    if (entity.id && !result["@odata.id"]) {
+        result["@odata.id"] = generateEntityId(context, String(entity.id));
+    }
+    return result;
+}
+/**
+ * Serializes a primitive response
+ * @param data Primitive data to serialize
+ * @param options Serialize options
+ * @param context OData middleware context
+ * @param request Middy request object
+ * @returns Serialized primitive response
+ */
+async function serializePrimitiveResponse(data, options, context) {
+    // For primitive responses, wrap in OData format
+    const result = {
+        "@odata.context": generateContextUrl(context),
+        value: data,
+    };
+    return result;
+}
+/**
+ * Generates @odata.context URL
+ * @param context OData middleware context
+ * @returns Context URL
+ */
+function generateContextUrl(context) {
+    const { serviceRoot, entitySet } = context;
+    if (entitySet) {
+        return `${serviceRoot}/$metadata#${entitySet}`;
+    }
+    return `${serviceRoot}/$metadata`;
+}
+/**
+ * Generates @odata.id URL for an entity
+ * @param context OData middleware context
+ * @param entityId Entity ID
+ * @returns Entity ID URL
+ */
+function generateEntityId(context, entityId) {
+    const { serviceRoot, entitySet } = context;
+    if (entitySet) {
+        return `${serviceRoot}/${entitySet}(${entityId})`;
+    }
+    return `${serviceRoot}(${entityId})`;
+}
+/**
+ * Generates @odata.nextLink URL
+ * @param context OData middleware context
+ * @param request Middy request object
+ * @param queryOptions OData query options
+ * @returns NextLink URL
+ */
+function generateNextLink(context, request) {
+    // This is a simplified implementation
+    // In a real scenario, this would check if there are more results
+    // and generate the appropriate nextLink URL
+    const { serviceRoot } = context;
+    const event = request.event || {};
+    // Get current path
+    const path = event.path || event.rawPath || '/';
+    // Get current query parameters
+    const currentQuery = event.rawQueryString
+        ? Object.fromEntries(new URLSearchParams(event.rawQueryString))
+        : (event.queryStringParameters || {});
+    // Update pagination parameters for next page
+    const nextQuery = { ...currentQuery };
+    const currentSkip = parseInt(nextQuery.$skip || '0', 10);
+    const currentTop = parseInt(nextQuery.$top || '50', 10);
+    nextQuery.$skip = String(currentSkip + currentTop);
+    // Build query string
+    const queryString = new URLSearchParams(nextQuery).toString();
+    return `${serviceRoot}${path}?${queryString}`;
+}
+/**
+ * Adds OData-specific HTTP headers
+ * @param response HTTP response object
+ * @param context OData middleware context
+ * @param options Serialize options
+ */
+function addODataHeaders(response, context, options) {
+    if (!response.headers) {
+        response.headers = {};
+    }
+    // Set content type based on format
+    switch (options.format) {
+        case 'json':
+            response.headers['Content-Type'] = 'application/json';
+            break;
+        case 'xml':
+            response.headers['Content-Type'] = 'application/xml';
+            break;
+        case 'atom':
+            response.headers['Content-Type'] = 'application/atom+xml';
+            break;
+        default:
+            response.headers['Content-Type'] = 'application/json';
+    }
+    // Add OData version header
+    response.headers['OData-Version'] = '4.01';
+    // Add ETag if available
+    if (context.data && typeof context.data === 'object') {
+        const data = context.data;
+        if (data['@odata.etag']) {
+            response.headers['ETag'] = data['@odata.etag'];
+        }
+    }
+    // Add CORS headers if needed
+    if (!response.headers['Access-Control-Allow-Origin']) {
+        response.headers['Access-Control-Allow-Origin'] = '*';
+    }
+    if (!response.headers['Access-Control-Allow-Methods']) {
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS';
+    }
+    if (!response.headers['Access-Control-Allow-Headers']) {
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, OData-MaxVersion, OData-Version';
+    }
+}

@@ -1,5 +1,6 @@
 import type { MiddlewareObj } from "@middy/core";
 import type { ODataParseOptions, ODataMiddlewareContext } from "./types";
+import type { EdmModel } from "../core/types";
 import { parseODataQuery } from "../core/parse";
 import { mergeMiddlewareOptions, setMiddlewareContext } from "./compose";
 
@@ -42,7 +43,7 @@ export function odataParse(options: Partial<ODataParseOptions> = {}): Middleware
 
         // Create OData context
         const context: ODataMiddlewareContext = {
-          model: opts.model,
+          model: opts.model as EdmModel,
           serviceRoot,
           entitySet: undefined, // Will be set by route handler or other middleware
           options: parsedOptions,
@@ -64,7 +65,7 @@ export function odataParse(options: Partial<ODataParseOptions> = {}): Middleware
         // If parsing fails, we should still set up basic context
         // The error middleware will handle the actual error
         const context: ODataMiddlewareContext = {
-          model: opts.model,
+          model: opts.model as EdmModel,
           serviceRoot: typeof opts.serviceRoot === "function" 
             ? opts.serviceRoot(request.event) 
             : opts.serviceRoot,

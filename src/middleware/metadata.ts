@@ -1,5 +1,5 @@
 import type { MiddlewareObj } from "@middy/core";
-import type { ODataMetadataOptions, ODataMiddlewareContext } from "./types";
+import type { ODataMetadataOptions } from "./types";
 import { generateMetadata, generateServiceDocument } from "../core/metadata";
 import { mergeMiddlewareOptions, getMiddlewareContext, setMiddlewareContext } from "./compose";
 
@@ -42,12 +42,7 @@ export function odataMetadata(options: Partial<ODataMetadataOptions> = {}): Midd
         // Check if this is a metadata request
         if (opts.enableMetadata && path.endsWith(opts.metadataPath)) {
           // Generate metadata document
-          const metadata = generateMetadata(context.model, {
-            serviceRoot: context.serviceRoot,
-            includeAnnotations: opts.includeAnnotations,
-            customAnnotations: opts.customAnnotations,
-            format: queryParams.$format || "xml",
-          });
+          const metadata = generateMetadata(context.model, context.serviceRoot);
 
           // Set the response
           const contentType = queryParams.$format === "json" 
@@ -82,10 +77,7 @@ export function odataMetadata(options: Partial<ODataMetadataOptions> = {}): Midd
 
           if (hasOnlyFormatParam) {
             // Generate service document
-            const serviceDocument = generateServiceDocument(context.model, {
-              serviceRoot: context.serviceRoot,
-              format: queryParams.$format || "json",
-            });
+            const serviceDocument = generateServiceDocument(context.model, context.serviceRoot);
 
             // Set the response
             const contentType = queryParams.$format === "xml" 

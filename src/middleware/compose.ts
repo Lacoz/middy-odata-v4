@@ -1,5 +1,8 @@
 import type { MiddlewareObj } from "@middy/core";
-import type { ODataMiddlewareArray, MiddlewarePhase } from "./types";
+// Removed unused imports
+
+declare const console: any;
+
 
 /**
  * Composes multiple middlewares into a single middleware following Middy's onion pattern
@@ -58,16 +61,16 @@ export function createLoggingMiddleware(name: string): MiddlewareObj {
     before: async (handler) => {
       const startTime = Date.now();
       handler.internal = handler.internal || {};
-      handler.internal[`${name}_start`] = startTime;
+      (handler.internal as any)[`${name}_start`] = startTime;
       console.log(`[OData] ${name} middleware: before phase started`);
     },
     after: async (handler) => {
-      const startTime = handler.internal?.[`${name}_start`] || Date.now();
+      const startTime = (handler.internal as any)?.[`${name}_start`] || Date.now();
       const duration = Date.now() - startTime;
       console.log(`[OData] ${name} middleware: after phase completed in ${duration}ms`);
     },
     onError: async (handler) => {
-      const startTime = handler.internal?.[`${name}_start`] || Date.now();
+      const startTime = (handler.internal as any)?.[`${name}_start`] || Date.now();
       const duration = Date.now() - startTime;
       console.error(`[OData] ${name} middleware: error phase in ${duration}ms`, handler.error);
     },

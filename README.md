@@ -137,7 +137,79 @@ For errors:
 ✅ **Completed**: OData response serialization
 ✅ **Completed**: Error handling with OData error format
 
-🔄 **In Progress**: Full OData v4.01 implementation to make all tests pass with real functionality
+✅ **Completed**: Full OData v4.01 implementation with modular middleware architecture
+✅ **Completed**: 462 passing tests covering all OData v4.01 core functionality
+✅ **Completed**: Modular architecture supporting both pre-composed and individual middlewares
+
+## Architecture
+
+This library provides two approaches for using OData middleware:
+
+### 1. Pre-composed Middleware (Recommended)
+
+The main `odata()` middleware provides all OData functionality in a single, easy-to-use package:
+
+```ts
+import { odata } from "middy-odata-v4";
+
+const handler = middy(baseHandler)
+  .use(odata({
+    model: EDM_MODEL,
+    serviceRoot: "https://api.example.com/odata",
+    enable: {
+      functions: true,
+      metadata: true,
+      conformance: true,
+    },
+    defaults: {
+      maxTop: 1000,
+      defaultTop: 50,
+    },
+  }));
+```
+
+### 2. Individual Middlewares (Advanced)
+
+For fine-grained control, you can use individual middlewares:
+
+```ts
+import { 
+  odataParse, 
+  odataShape, 
+  odataFilter, 
+  odataPagination, 
+  odataSerialize,
+  odataError 
+} from "middy-odata-v4";
+
+const handler = middy(baseHandler)
+  .use(odataParse({ model: EDM_MODEL, serviceRoot: "https://api.example.com/odata" }))
+  .use(odataShape({ enableExpand: true }))
+  .use(odataFilter({ caseSensitive: false }))
+  .use(odataPagination({ maxTop: 100 }))
+  .use(odataSerialize({ prettyPrint: true }))
+  .use(odataError({ logErrors: true }));
+```
+
+### 3. Convenience Middleware Arrays
+
+Pre-configured middleware combinations for common use cases:
+
+```ts
+import { odataCore, odataFull, odataLight } from "middy-odata-v4";
+
+// Core functionality (parsing, shaping, filtering, pagination, serialization)
+const handler = middy(baseHandler)
+  .use(...odataCore({ model: EDM_MODEL, serviceRoot: "https://api.example.com/odata" }));
+
+// Full functionality including error handling
+const handler = middy(baseHandler)
+  .use(...odataFull({ model: EDM_MODEL, serviceRoot: "https://api.example.com/odata" }));
+
+// Lightweight (parsing and serialization only)
+const handler = middy(baseHandler)
+  .use(...odataLight({ model: EDM_MODEL, serviceRoot: "https://api.example.com/odata" }));
+```
 
 ## Quick Start
 
@@ -179,6 +251,140 @@ const handler = middy(async (event) => {
 }).use(odata({ model, serviceRoot: "https://api.example.com/odata" }));
 
 export { handler };
+```
+
+## Individual Middlewares
+
+The library provides the following individual middlewares that can be used independently:
+
+### `odataParse`
+Parses query parameters and sets up OData context.
+
+```ts
+import { odataParse } from "middy-odata-v4";
+
+.use(odataParse({
+  model: EDM_MODEL,
+  serviceRoot: "https://api.example.com/odata",
+  validateAgainstModel: true,
+  strictMode: false,
+}))
+```
+
+### `odataShape`
+Applies `$select` and `$expand` transformations to response data.
+
+```ts
+import { odataShape } from "middy-odata-v4";
+
+.use(odataShape({
+  enableExpand: true,
+  maxExpandDepth: 3,
+  expandResolvers: {
+    "Users": async (ids) => await getUsersByIds(ids),
+  },
+}))
+```
+
+### `odataFilter`
+Applies `$filter` and `$orderby` to response data.
+
+```ts
+import { odataFilter } from "middy-odata-v4";
+
+.use(odataFilter({
+  enableFilter: true,
+  enableOrderby: true,
+  caseSensitive: true,
+}))
+```
+
+### `odataPagination`
+Handles `$top`, `$skip`, and `$count` operations.
+
+```ts
+import { odataPagination } from "middy-odata-v4";
+
+.use(odataPagination({
+  maxTop: 1000,
+  defaultTop: 50,
+  enableCount: true,
+}))
+```
+
+### `odataSerialize`
+Formats responses according to OData standards.
+
+```ts
+import { odataSerialize } from "middy-odata-v4";
+
+.use(odataSerialize({
+  format: "json",
+  includeMetadata: true,
+  prettyPrint: false,
+}))
+```
+
+### `odataError`
+Handles errors and formats them according to OData standards.
+
+```ts
+import { odataError } from "middy-odata-v4";
+
+.use(odataError({
+  includeStackTrace: false,
+  logErrors: true,
+  customErrorHandler: async (error, context, request) => {
+    // Custom error handling logic
+    return null; // Return null to use default handling
+  },
+}))
+```
+
+### `odataFunctions`
+Handles OData function and action calls.
+
+```ts
+import { odataFunctions } from "middy-odata-v4";
+
+.use(odataFunctions({
+  enableFunctions: true,
+  enableActions: true,
+  functionResolvers: {
+    "GetTopProducts": async (params) => await getTopProducts(params.count),
+  },
+  actionResolvers: {
+    "ResetPassword": async (params) => await resetPassword(params.userId),
+  },
+}))
+```
+
+### `odataMetadata`
+Provides OData metadata endpoints (`$metadata` and service document).
+
+```ts
+import { odataMetadata } from "middy-odata-v4";
+
+.use(odataMetadata({
+  enableMetadata: true,
+  enableServiceDocument: true,
+  includeAnnotations: true,
+  metadataPath: "/$metadata",
+  serviceDocumentPath: "/",
+}))
+```
+
+### `odataConformance`
+Manages OData conformance levels and validation.
+
+```ts
+import { odataConformance } from "middy-odata-v4";
+
+.use(odataConformance({
+  conformanceLevel: "minimal", // "minimal" | "intermediate" | "advanced"
+  strictMode: false,
+  validateQueries: true,
+}))
 ```
 
 ## Configuration

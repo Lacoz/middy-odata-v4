@@ -1,5 +1,6 @@
 import type { MiddlewareObj } from "@middy/core";
 import type { EdmModel } from "../core/types";
+import type { ODataMiddlewareContext } from "./types";
 import { composeMiddlewares } from "./compose";
 import { odataParse } from "./parse";
 import { odataShape } from "./shape";
@@ -51,7 +52,7 @@ export interface ODataOptions {
   shape?: {
     enableExpand?: boolean;
     maxExpandDepth?: number;
-    expandResolvers?: Record<string, Function>;
+    expandResolvers?: Record<string, (...args: unknown[]) => unknown>;
   };
 
   filter?: {
@@ -76,14 +77,14 @@ export interface ODataOptions {
   error?: {
     includeStackTrace?: boolean;
     logErrors?: boolean;
-    customErrorHandler?: Function;
+    customErrorHandler?: (error: Error, context: ODataMiddlewareContext) => void;
   };
 
   functions?: {
     enableFunctions?: boolean;
     enableActions?: boolean;
-    functionResolvers?: Record<string, Function>;
-    actionResolvers?: Record<string, Function>;
+    functionResolvers?: Record<string, (...args: unknown[]) => unknown>;
+    actionResolvers?: Record<string, (...args: unknown[]) => unknown>;
     validateParameters?: boolean;
   };
 
@@ -100,7 +101,7 @@ export interface ODataOptions {
     conformanceLevel?: "minimal" | "intermediate" | "advanced";
     strictMode?: boolean;
     validateQueries?: boolean;
-    customValidationRules?: Record<string, Function>;
+    customValidationRules?: Record<string, (...args: unknown[]) => unknown>;
   };
 }
 
@@ -200,7 +201,7 @@ export function odata(options: ODataOptions): MiddlewareObj {
     middlewares.push(odataShape({
       enableExpand: opts.shape?.enableExpand ?? true,
       maxExpandDepth: opts.shape?.maxExpandDepth ?? opts.defaults?.maxExpandDepth ?? 3,
-      expandResolvers: opts.shape?.expandResolvers ?? {},
+      expandResolvers: (opts.shape?.expandResolvers ?? {}) as Record<string, (context: ODataMiddlewareContext) => Promise<unknown>>,
     }));
   }
 
@@ -237,7 +238,7 @@ export function odata(options: ODataOptions): MiddlewareObj {
     middlewares.push(odataError({
       includeStackTrace: opts.error?.includeStackTrace ?? false,
       logErrors: opts.error?.logErrors ?? true,
-      customErrorHandler: opts.error?.customErrorHandler,
+      customErrorHandler: opts.error?.customErrorHandler as ((error: Error, context: ODataMiddlewareContext, request: any) => unknown) | undefined,
     }));
   }
 

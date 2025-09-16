@@ -3,6 +3,9 @@ import type { ODataConformanceOptions, ODataMiddlewareContext } from "./types";
 import { validateConformanceLevel } from "../core/conformance-levels";
 import { mergeMiddlewareOptions, getMiddlewareContext, setMiddlewareContext } from "./compose";
 
+declare const console: any;
+
+
 const DEFAULT_CONFORMANCE_OPTIONS: ODataConformanceOptions = {
   conformanceLevel: "minimal",
   strictMode: false,
@@ -209,7 +212,7 @@ export const commonValidationRules = {
 export function createConformanceOptions(
   level: "minimal" | "intermediate" | "advanced" = "minimal",
   strictMode: boolean = false,
-  customRules: Record<string, Function> = {}
+  customRules: Record<string, (...args: unknown[]) => unknown> = {}
 ): ODataConformanceOptions {
   const rules = { ...commonValidationRules[level], ...customRules };
   

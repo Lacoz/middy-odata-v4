@@ -1,6 +1,6 @@
 import type { MiddlewareObj } from "@middy/core";
 import type { ODataFunctionsOptions, ODataMiddlewareContext } from "./types";
-import { executeFunction, executeAction } from "../core/functions-actions";
+import { callFunction, callAction } from "../core/functions-actions";
 import { mergeMiddlewareOptions, getMiddlewareContext, setMiddlewareContext } from "./compose";
 
 const DEFAULT_FUNCTIONS_OPTIONS: ODataFunctionsOptions = {
@@ -38,24 +38,19 @@ export function odataFunctions(options: Partial<ODataFunctionsOptions> = {}): Mi
         const path = event.path || event.rawPath || "";
         
         // Check if this is a function or action call
-        const functionMatch = path.match(/\/functions\/([^\/]+)(?:\/([^\/]+))?/);
-        const actionMatch = path.match(/\/actions\/([^\/]+)(?:\/([^\/]+))?/);
+        const functionMatch = path.match(/\/functions\/([^/]+)(?:\/([^/]+))?/);
+        const actionMatch = path.match(/\/actions\/([^/]+)(?:\/([^/]+))?/);
         
         if (functionMatch && opts.enableFunctions) {
           const [, functionName, entityKey] = functionMatch;
           
           // Execute function
-          const result = await executeFunction(
+          const result = await callFunction(
             functionName,
             {
               parameters: event.queryStringParameters || {},
               entityKey,
               context,
-            },
-            {
-              model: context.model,
-              resolvers: opts.functionResolvers,
-              validateParameters: opts.validateParameters,
             }
           );
 
@@ -85,17 +80,12 @@ export function odataFunctions(options: Partial<ODataFunctionsOptions> = {}): Mi
           const [, actionName, entityKey] = actionMatch;
           
           // Execute action
-          const result = await executeAction(
+          const result = await callAction(
             actionName,
             {
               parameters: event.body ? JSON.parse(event.body) : {},
               entityKey,
               context,
-            },
-            {
-              model: context.model,
-              resolvers: opts.actionResolvers,
-              validateParameters: opts.validateParameters,
             }
           );
 
@@ -161,24 +151,24 @@ export function registerActionResolver(
  * Helper function to create a function resolver map
  */
 export function createFunctionResolvers(
-  resolvers: Array<{ functionName: string; resolver: Function }>
-): Record<string, Function> {
+  resolvers: Array<{ functionName: string; resolver: (...args: unknown[]) => unknown }>
+): Record<string, (...args: unknown[]) => unknown> {
   return resolvers.reduce((acc, { functionName, resolver }) => {
     acc[functionName] = resolver;
     return acc;
-  }, {} as Record<string, Function>);
+  }, {} as Record<string, (...args: unknown[]) => unknown>);
 }
 
 /**
  * Helper function to create an action resolver map
  */
 export function createActionResolvers(
-  resolvers: Array<{ actionName: string; resolver: Function }>
-): Record<string, Function> {
+  resolvers: Array<{ actionName: string; resolver: (...args: unknown[]) => unknown }>
+): Record<string, (...args: unknown[]) => unknown> {
   return resolvers.reduce((acc, { actionName, resolver }) => {
     acc[actionName] = resolver;
     return acc;
-  }, {} as Record<string, Function>);
+  }, {} as Record<string, (...args: unknown[]) => unknown>);
 }
 
 /**
@@ -233,27 +223,27 @@ export const builtInFunctionResolvers = {
  */
 export const builtInActionResolvers = {
   // CRUD actions
-  create: async (data: any, context: ODataMiddlewareContext) => {
+  create: async (data: any) => {
     // This would typically interact with a database
     return { ...data, id: Date.now() };
   },
   
-  update: async (data: any, context: ODataMiddlewareContext) => {
+  update: async (data: any) => {
     // This would typically update a database record
     return data;
   },
   
-  delete: async (data: any, context: ODataMiddlewareContext) => {
+  delete: async () => {
     // This would typically delete a database record
     return { success: true };
   },
   
   // Custom business actions
-  approve: async (data: any, context: ODataMiddlewareContext) => {
+  approve: async (data: any) => {
     return { ...data, status: "approved", approvedAt: new Date().toISOString() };
   },
   
-  reject: async (data: any, context: ODataMiddlewareContext) => {
+  reject: async (data: any) => {
     return { ...data, status: "rejected", rejectedAt: new Date().toISOString() };
   },
 };

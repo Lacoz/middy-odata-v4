@@ -3,6 +3,9 @@ import type { ODataErrorOptions, ODataMiddlewareContext } from "./types";
 import { toODataError } from "../core/errors";
 import { mergeMiddlewareOptions, getMiddlewareContext, setMiddlewareContext } from "./compose";
 
+declare const console: any;
+
+
 const DEFAULT_ERROR_OPTIONS: ODataErrorOptions = {
   includeStackTrace: false,
   logErrors: true,
@@ -73,9 +76,9 @@ export function odataError(options: Partial<ODataErrorOptions> = {}): Middleware
           context.metadata = {
             ...context.metadata,
             error: {
-              code: odataError.code,
-              message: odataError.message,
-              statusCode: odataError.statusCode,
+              code: (error as any).code || "InternalServerError",
+              message: error.message,
+              statusCode: (error as any).statusCode || 500,
             },
           };
           setMiddlewareContext(request, context);

@@ -29,3 +29,34 @@ export declare function getMetadataDocument(options: {
 export declare function validateConformanceLevel(level: string): ConformanceLevel;
 export declare function getSupportedQueryOptions(conformance: ConformanceLevel): string[];
 export declare function checkQueryOptionSupport(queryOption: string, conformance: ConformanceLevel): boolean;
+export declare function callFunction(functionName: string, parameters: Record<string, unknown>, options: {
+    conformance: ConformanceLevel;
+}): {
+    value: unknown;
+};
+export declare function callAction(actionName: string, parameters: Record<string, unknown>, options: {
+    conformance: ConformanceLevel;
+}): {
+    value: unknown;
+};
+export declare function callFunctionImport(functionName: string, parameters: Record<string, unknown>, options: {
+    conformance: ConformanceLevel;
+}): {
+    value: unknown;
+};
+export declare function callActionImport(actionName: string, parameters: Record<string, unknown>, options: {
+    conformance: ConformanceLevel;
+}): {
+    value: unknown;
+};
+export declare function executeBatch(batch: Array<{
+    method: string;
+    url: string;
+    body?: unknown;
+}>, options: {
+    conformance: ConformanceLevel;
+}): unknown[];
+export declare function validateConformance(level: ConformanceLevel): {
+    isValid: boolean;
+    missingFeatures: string[];
+};

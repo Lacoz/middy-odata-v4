@@ -10,9 +10,7 @@ export interface CrudOptions {
 // Simple CRUD operations implementation
 export function createEntity<T extends ODataEntity>(
   collection: T[], 
-  entity: Partial<T>,
-  entityType?: string,
-  options?: CrudOptions
+  entity: Partial<T>
 ): T {
   // Generate a new ID (simple implementation)
   const newId = Math.max(...collection.map(item => (item as any).id || 0)) + 1;
@@ -30,9 +28,7 @@ export function createEntity<T extends ODataEntity>(
 
 export function readEntity<T extends ODataEntity>(
   collection: T[], 
-  key: string | number,
-  entityType?: string,
-  options?: CrudOptions
+  key: string | number
 ): T | null {
   const entity = collection.find(item => (item as any).id === key);
   return entity || null;
@@ -40,10 +36,8 @@ export function readEntity<T extends ODataEntity>(
 
 export function updateEntity<T extends ODataEntity>(
   collection: T[], 
-  key: string | number, 
-  updates: Partial<T>,
-  entityType?: string,
-  options?: CrudOptions
+  key: string | number,
+  updates: Partial<T>
 ): T | null {
   const index = collection.findIndex(item => (item as any).id === key);
   if (index === -1) return null;
@@ -59,9 +53,7 @@ export function updateEntity<T extends ODataEntity>(
 
 export function deleteEntity<T extends ODataEntity>(
   collection: T[], 
-  key: string | number,
-  entityType?: string,
-  options?: CrudOptions
+  key: string | number
 ): boolean {
   const index = collection.findIndex(item => (item as any).id === key);
   if (index === -1) return false;
@@ -145,46 +137,39 @@ export function handleBatchOperations<T extends ODataEntity>(
 export function createEntityWithValidation<T extends ODataEntity>(
   collection: T[], 
   entity: Partial<T>,
-  entityType: string,
-  options?: CrudOptions
+  entityType: string
 ): T {
   const validation = validateEntity(entity, entityType);
   if (!validation.isValid) {
     throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
   }
   
-  return createEntity(collection, entity, entityType, options);
+  return createEntity(collection, entity);
 }
 
 export function deepInsert<T extends ODataEntity>(
   collection: T[], 
-  entity: Partial<T>,
-  entityType: string,
-  options?: CrudOptions
+  entity: Partial<T>
 ): T {
   // For deep insert, we need to handle nested entities
   // This is a simplified implementation
-  return createEntity(collection, entity, entityType, options);
+  return createEntity(collection, entity);
 }
 
 export function deepUpdate<T extends ODataEntity>(
   collection: T[], 
   key: string | number,
-  updates: Partial<T>,
-  entityType: string,
-  options?: CrudOptions
+  updates: Partial<T>
 ): T | null {
   // For deep update, we need to handle nested entity updates
   // This is a simplified implementation
-  return updateEntity(collection, key, updates, entityType, options);
+  return updateEntity(collection, key, updates);
 }
 
 export function partialUpdate<T extends ODataEntity>(
   collection: T[], 
   key: string | number,
-  updates: Partial<T>,
-  entityType: string,
-  options?: CrudOptions
+  updates: Partial<T>
 ): T | null {
   // Partial update only updates specified fields, preserving others
   const index = collection.findIndex(item => (item as any).id === key);
@@ -205,7 +190,7 @@ export function conditionalRead<T extends ODataEntity>(
   entityType: string,
   options?: CrudOptions
 ): T | null {
-  const entity = readEntity(collection, key, entityType, options);
+  const entity = readEntity(collection, key);
   
   // Check conditional headers if provided
   if (options?.ifMatch && entity) {
@@ -232,7 +217,7 @@ export function conditionalUpdate<T extends ODataEntity>(
   entityType: string,
   options?: CrudOptions
 ): T | null {
-  const entity = readEntity(collection, key, entityType, options);
+  const entity = readEntity(collection, key);
   
   // Check conditional headers if provided
   if (options?.ifMatch && entity) {
@@ -242,7 +227,7 @@ export function conditionalUpdate<T extends ODataEntity>(
     }
   }
   
-  return updateEntity(collection, key, updates, entityType, options);
+  return updateEntity(collection, key, updates);
 }
 
 export function conditionalDelete<T extends ODataEntity>(
@@ -251,7 +236,7 @@ export function conditionalDelete<T extends ODataEntity>(
   entityType: string,
   options?: CrudOptions
 ): boolean {
-  const entity = readEntity(collection, key, entityType, options);
+  const entity = readEntity(collection, key);
   
   // Check conditional headers if provided
   if (options?.ifMatch && entity) {
@@ -268,27 +253,23 @@ export function conditionalDelete<T extends ODataEntity>(
     }
   }
   
-  return deleteEntity(collection, key, entityType, options);
+  return deleteEntity(collection, key);
 }
 
 export function cascadeDelete<T extends ODataEntity>(
   collection: T[], 
-  key: string | number,
-  entityType: string,
-  options?: CrudOptions
+  key: string | number
 ): boolean {
   // Cascade delete would also delete related entities
   // This is a simplified implementation
-  return deleteEntity(collection, key, entityType, options);
+  return deleteEntity(collection, key);
 }
 
 export function restrictedDelete<T extends ODataEntity>(
   collection: T[], 
-  key: string | number,
-  entityType: string,
-  options?: CrudOptions
+  key: string | number
 ): boolean {
   // Restricted delete checks for referential integrity
   // This is a simplified implementation that always allows deletion
-  return deleteEntity(collection, key, entityType, options);
+  return deleteEntity(collection, key);
 }

@@ -3,6 +3,8 @@ import type { ODataFilterOptions, ODataMiddlewareContext } from "./types";
 import { filterArray, orderArray } from "../core/filter-order";
 import { mergeMiddlewareOptions, getMiddlewareContext, setMiddlewareContext } from "./compose";
 
+declare const console: any;
+
 const DEFAULT_FILTER_OPTIONS: ODataFilterOptions = {
   enableFilter: true,
   enableOrderby: true,
@@ -87,7 +89,7 @@ async function applyFilteringAndOrdering(
 
   // Handle collection responses
   if (Array.isArray(data)) {
-    return await filterAndOrderCollection(data, queryOptions, options, context);
+    return await filterAndOrderCollection(data, queryOptions, options);
   }
 
   // Handle single entity responses - filtering doesn't apply to single entities
@@ -111,15 +113,14 @@ async function applyFilteringAndOrdering(
 async function filterAndOrderCollection(
   entities: unknown[],
   queryOptions: any,
-  options: ODataFilterOptions,
-  context: ODataMiddlewareContext
+  options: ODataFilterOptions
 ): Promise<unknown[]> {
   let filteredEntities = [...entities];
 
   // Apply $filter if present and enabled
   if (queryOptions.filter && options.enableFilter) {
     try {
-      filteredEntities = filterArray(filteredEntities, queryOptions.filter);
+      filteredEntities = filterArray(filteredEntities as any[], queryOptions.filter);
     } catch (error) {
       console.error('[OData Filter] Error applying filter:', error);
       // Continue with unfiltered data
@@ -129,7 +130,7 @@ async function filterAndOrderCollection(
   // Apply $orderby if present and enabled
   if (queryOptions.orderby && queryOptions.orderby.length > 0 && options.enableOrderby) {
     try {
-      filteredEntities = orderArray(filteredEntities, queryOptions.orderby);
+      filteredEntities = orderArray(filteredEntities as any[], queryOptions.orderby);
     } catch (error) {
       console.error('[OData Filter] Error applying orderby:', error);
       // Continue with unordered data
@@ -165,7 +166,6 @@ async function filterAndOrderEntity(
           value,
           collectionOptions,
           options,
-          context
         );
       }
     }
@@ -196,62 +196,4 @@ function getCollectionOptionsForProperty(propertyName: string, queryOptions: any
   return null;
 }
 
-/**
- * Validates filter expression against the EDM model
- * @param filterExpression Filter expression to validate
- * @param model EDM model
- * @throws Error if validation fails
- */
-function validateFilterExpression(filterExpression: string, model: any): void {
-  // This is a simplified validation
-  // In a real implementation, this would parse the filter expression
-  // and validate all property references against the EDM model
-  
-  if (!filterExpression || typeof filterExpression !== 'string') {
-    throw new Error('Invalid filter expression');
-  }
 
-  // Check for basic syntax issues
-  if (filterExpression.includes('undefined') || filterExpression.includes('null')) {
-    // These might be valid in some contexts, but we'll flag them for review
-    console.warn('[OData Filter] Filter expression contains potentially problematic values');
-  }
-}
-
-/**
- * Validates orderby properties against the EDM model
- * @param orderbyItems Orderby items to validate
- * @param model EDM model
- * @throws Error if validation fails
- */
-function validateOrderbyProperties(orderbyItems: any[], model: any): void {
-  for (const orderbyItem of orderbyItems) {
-    const property = orderbyItem.property;
-    
-    if (!property) {
-      throw new Error('Invalid orderby item: missing property');
-    }
-
-    // Check if property exists in model
-    if (!isValidPropertyPath(property, model)) {
-      throw new Error(`Invalid property in $orderby: ${property}`);
-    }
-  }
-}
-
-/**
- * Checks if a property path is valid in the EDM model
- * @param propertyPath Property path to validate
- * @param model EDM model
- * @returns True if valid
- */
-function isValidPropertyPath(propertyPath: string, model: any): boolean {
-  if (!model.entityTypes || model.entityTypes.length === 0) {
-    return true; // Can't validate without entity types
-  }
-
-  // Check if property exists in any entity type
-  return model.entityTypes.some((entityType: any) => 
-    entityType.properties?.some((prop: any) => prop.name === propertyPath)
-  );
-}

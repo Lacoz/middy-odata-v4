@@ -52,6 +52,23 @@ export * from "./core/serialize";
 export * from "./core/error-handling";
 export * from "./core/functions-actions";
 export * from "./core/metadata";
-export * from "./core/conformance-levels";
+// Export conformance-levels with renamed functions to avoid conflicts
+export { 
+  queryWithConformance,
+  getServiceDocument,
+  getMetadataDocument,
+  validateConformanceLevel as validateConformanceLevelType,
+  getSupportedQueryOptions,
+  checkQueryOptionSupport,
+  callFunction as callConformanceFunction,
+  callAction as callConformanceAction,
+  callFunctionImport as callConformanceFunctionImport,
+  callActionImport as callConformanceActionImport,
+  executeBatch,
+  validateConformance,
+  type ConformanceLevel,
+  type ConformanceOptions,
+  type ConformanceResponse
+} from "./core/conformance-levels";
 export * from "./core/format-serialization";
 export * from "./core/search-compute-apply";

@@ -3,6 +3,9 @@ import type { ODataSerializeOptions, ODataMiddlewareContext } from "./types";
 import { serializeCollection } from "../core/serialize";
 import { mergeMiddlewareOptions, getMiddlewareContext, setMiddlewareContext } from "./compose";
 
+declare const console: any;
+
+
 const DEFAULT_SERIALIZE_OPTIONS: ODataSerializeOptions = {
   format: "json",
   includeMetadata: true,
@@ -101,11 +104,11 @@ async function applySerialization(
 
   // Handle single entity responses
   if (data && typeof data === 'object') {
-    return await serializeEntityResponse(data as Record<string, unknown>, queryOptions, options, context, request);
+    return await serializeEntityResponse(data as Record<string, unknown>, queryOptions, options, context);
   }
 
   // Handle primitive responses
-  return await serializePrimitiveResponse(data, options, context, request);
+  return await serializePrimitiveResponse(data, options, context);
 }
 
 /**
@@ -126,7 +129,7 @@ async function serializeCollectionResponse(
 ): Promise<unknown> {
   const contextUrl = generateContextUrl(context);
   const count = queryOptions.count ? entities.length : undefined;
-  const nextLink = generateNextLink(context, request, queryOptions);
+  const nextLink = generateNextLink(context, request);
 
   // Use the existing serializeCollection function if available
   if (typeof serializeCollection === 'function') {
@@ -163,8 +166,7 @@ async function serializeEntityResponse(
   entity: Record<string, unknown>,
   queryOptions: any,
   options: ODataSerializeOptions,
-  context: ODataMiddlewareContext,
-  request: any
+  context: ODataMiddlewareContext
 ): Promise<Record<string, unknown>> {
   const result = { ...entity };
 
@@ -180,7 +182,7 @@ async function serializeEntityResponse(
 
   // Add @odata.id if entity has an id property
   if (entity.id && !result["@odata.id"]) {
-    result["@odata.id"] = generateEntityId(context, entity.id);
+    result["@odata.id"] = generateEntityId(context, String(entity.id));
   }
 
   return result;
@@ -197,8 +199,7 @@ async function serializeEntityResponse(
 async function serializePrimitiveResponse(
   data: unknown,
   options: ODataSerializeOptions,
-  context: ODataMiddlewareContext,
-  request: any
+  context: ODataMiddlewareContext
 ): Promise<unknown> {
   // For primitive responses, wrap in OData format
   const result: any = {
@@ -249,8 +250,7 @@ function generateEntityId(context: ODataMiddlewareContext, entityId: string | nu
  */
 function generateNextLink(
   context: ODataMiddlewareContext,
-  request: any,
-  queryOptions: any
+  request: any
 ): string | undefined {
   // This is a simplified implementation
   // In a real scenario, this would check if there are more results
@@ -331,35 +331,3 @@ function addODataHeaders(response: any, context: ODataMiddlewareContext, options
   }
 }
 
-/**
- * Validates serialization options
- * @param options Serialize options
- * @throws Error if validation fails
- */
-function validateSerializeOptions(options: ODataSerializeOptions): void {
-  if (options.format && !['json', 'xml', 'atom'].includes(options.format)) {
-    throw new Error(`Unsupported format: ${options.format}. Supported formats are: json, xml, atom`);
-  }
-}
-
-/**
- * Formats response data based on the specified format
- * @param data Data to format
- * @param format Output format
- * @param prettyPrint Whether to pretty print
- * @returns Formatted data
- */
-function formatResponseData(data: unknown, format: string, prettyPrint: boolean): string {
-  switch (format) {
-    case 'json':
-      return JSON.stringify(data, null, prettyPrint ? 2 : 0);
-    case 'xml':
-      // XML formatting would be implemented here
-      return JSON.stringify(data); // Fallback to JSON for now
-    case 'atom':
-      // ATOM formatting would be implemented here
-      return JSON.stringify(data); // Fallback to JSON for now
-    default:
-      return JSON.stringify(data, null, prettyPrint ? 2 : 0);
-  }
-}

@@ -3,6 +3,8 @@ import type { ODataPaginationOptions, ODataMiddlewareContext } from "./types";
 import { paginateArray } from "../core/filter-order";
 import { mergeMiddlewareOptions, getMiddlewareContext, setMiddlewareContext } from "./compose";
 
+declare const console: any;
+
 const DEFAULT_PAGINATION_OPTIONS: ODataPaginationOptions = {
   maxTop: 1000,
   defaultTop: 50,
@@ -131,7 +133,7 @@ async function paginateCollection(
 
   // Apply pagination
   if (validatedTop !== undefined || validatedSkip > 0) {
-    paginatedEntities = paginateArray(entities, validatedTop, validatedSkip);
+    paginatedEntities = paginateArray(entities, { top: validatedTop, skip: validatedSkip });
   }
 
   // Create paginated response
@@ -198,7 +200,7 @@ function validateTopLimit(top: number | undefined, options: ODataPaginationOptio
     return 0;
   }
 
-  if (top > options.maxTop) {
+  if (top > (options.maxTop || 1000)) {
     console.warn(`[OData Pagination] Top value ${top} exceeds maximum ${options.maxTop}, using maximum`);
     return options.maxTop;
   }
@@ -256,64 +258,3 @@ function generateNextLink(
   return `${serviceRoot}${path}?${queryString}`;
 }
 
-/**
- * Calculates pagination metadata
- * @param totalCount Total number of items
- * @param top Top value
- * @param skip Skip value
- * @returns Pagination metadata
- */
-function calculatePaginationMetadata(
-  totalCount: number,
-  top?: number,
-  skip: number = 0
-): {
-  hasMoreResults: boolean;
-  currentPage: number;
-  totalPages: number;
-  itemsPerPage: number;
-  startIndex: number;
-  endIndex: number;
-} {
-  const itemsPerPage = top || totalCount;
-  const totalPages = Math.ceil(totalCount / itemsPerPage);
-  const currentPage = Math.floor(skip / itemsPerPage) + 1;
-  const startIndex = skip;
-  const endIndex = Math.min(skip + itemsPerPage - 1, totalCount - 1);
-  const hasMoreResults = (skip + itemsPerPage) < totalCount;
-
-  return {
-    hasMoreResults,
-    currentPage,
-    totalPages,
-    itemsPerPage,
-    startIndex,
-    endIndex,
-  };
-}
-
-/**
- * Validates pagination parameters
- * @param queryOptions OData query options
- * @param options Pagination options
- * @throws Error if validation fails
- */
-function validatePaginationParameters(queryOptions: any, options: ODataPaginationOptions): void {
-  const { top, skip } = queryOptions;
-
-  if (top !== undefined) {
-    if (typeof top !== 'number' || top < 0) {
-      throw new Error('Invalid $top value: must be a non-negative number');
-    }
-    
-    if (top > options.maxTop) {
-      throw new Error(`$top value ${top} exceeds maximum allowed value ${options.maxTop}`);
-    }
-  }
-
-  if (skip !== undefined) {
-    if (typeof skip !== 'number' || skip < 0) {
-      throw new Error('Invalid $skip value: must be a non-negative number');
-    }
-  }
-}

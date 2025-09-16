@@ -1,7 +1,10 @@
 import type { MiddlewareObj } from "@middy/core";
 import type { ODataShapeOptions, ODataMiddlewareContext } from "./types";
-import { applySelect, projectArray, expandData } from "../core/shape";
+import { applySelect } from "../core/shape";
 import { mergeMiddlewareOptions, getMiddlewareContext, setMiddlewareContext } from "./compose";
+
+declare const console: any;
+
 
 const DEFAULT_SHAPE_OPTIONS: ODataShapeOptions = {
   enableExpand: true,
@@ -272,40 +275,4 @@ async function applyExpansion(
   return expandedEntity;
 }
 
-/**
- * Validates expand paths against the EDM model
- * @param expandItems Expand items to validate
- * @param model EDM model
- * @throws Error if validation fails
- */
-function validateExpandPaths(expandItems: any[], model: any): void {
-  for (const expandItem of expandItems) {
-    const navigationProperty = expandItem.path;
-    
-    if (!navigationProperty) {
-      throw new Error('Invalid expand item: missing path');
-    }
 
-    // Check if navigation property exists in model
-    if (!isValidNavigationProperty(navigationProperty, model)) {
-      throw new Error(`Invalid navigation property in $expand: ${navigationProperty}`);
-    }
-  }
-}
-
-/**
- * Checks if a navigation property is valid in the EDM model
- * @param navigationPath Navigation property path to validate
- * @param model EDM model
- * @returns True if valid
- */
-function isValidNavigationProperty(navigationPath: string, model: any): boolean {
-  if (!model.entityTypes || model.entityTypes.length === 0) {
-    return true; // Can't validate without entity types
-  }
-
-  // Check if navigation property exists in any entity type
-  return model.entityTypes.some((entityType: any) => 
-    entityType.navigation?.some((nav: any) => nav.name === navigationPath)
-  );
-}
