@@ -17,6 +17,8 @@ cd docker-test
 ./test.sh
 ```
 
+**Note**: The `deploy` script creates a `docker-test/deployment/` directory for testing. This is a build artifact and can be safely deleted.
+
 ## API Endpoints
 
 - `GET /Users` - Get all users

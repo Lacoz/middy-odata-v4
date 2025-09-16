@@ -1,7 +1,7 @@
 FROM public.ecr.aws/lambda/nodejs:22
 
-# Copy the extracted deployment package
-COPY extracted/ /var/task/
+# Copy the deployment package
+COPY deployment/ /var/task/
 
 # Set the handler
-CMD ["index.odataHandler"]
+CMD ["index.handler"]
