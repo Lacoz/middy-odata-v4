@@ -95,7 +95,7 @@ async function applyFilteringAndOrdering(
   // Handle single entity responses - filtering doesn't apply to single entities
   // but ordering might if it's a collection property
   if (data && typeof data === 'object') {
-    return await filterAndOrderEntity(data as Record<string, unknown>, queryOptions, options, context);
+    return await filterAndOrderEntity(data as Record<string, unknown>, queryOptions, options);
   }
 
   // Return primitive values as-is
@@ -151,8 +151,7 @@ async function filterAndOrderCollection(
 async function filterAndOrderEntity(
   entity: Record<string, unknown>,
   queryOptions: any,
-  options: ODataFilterOptions,
-  context: ODataMiddlewareContext
+  options: ODataFilterOptions
 ): Promise<Record<string, unknown>> {
   const processedEntity = { ...entity };
 
