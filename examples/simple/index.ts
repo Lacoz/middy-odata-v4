@@ -64,27 +64,23 @@ const users: User[] = [
 
 // Define the EDM model for the Users entity
 const model: EdmModel = {
-  entityTypes: {
-    User: {
-      name: "User",
-      properties: {
-        id: { type: "Edm.Int32", nullable: false },
-        name: { type: "Edm.String", maxLength: 100 },
-        email: { type: "Edm.String", maxLength: 255 },
-        age: { type: "Edm.Int32", nullable: false },
-        active: { type: "Edm.Boolean", nullable: false },
-        createdAt: { type: "Edm.DateTimeOffset", nullable: false }
-      },
-      key: ["id"]
-    }
-  },
-  entitySets: {
-    Users: {
-      name: "Users",
-      entityType: "User"
-    }
-  },
-  namespace: "SimpleExample"
+  namespace: "SimpleExample",
+  entityTypes: [{
+    name: "User",
+    key: ["id"],
+    properties: [
+      { name: "id", type: "Edm.Int32", nullable: false },
+      { name: "name", type: "Edm.String" },
+      { name: "email", type: "Edm.String" },
+      { name: "age", type: "Edm.Int32", nullable: false },
+      { name: "active", type: "Edm.Boolean", nullable: false },
+      { name: "createdAt", type: "Edm.DateTimeOffset", nullable: false }
+    ]
+  }],
+  entitySets: [{
+    name: "Users",
+    entityType: "User"
+  }]
 };
 
 // Main Lambda handler
@@ -93,7 +89,7 @@ export const handler = async (
 ): Promise<APIGatewayProxyResult> => {
   try {
     // Extract the entity set from the path
-    const pathSegments = event.path.split('/').filter(segment => segment);
+    const pathSegments = event.path.split('/').filter((segment: string) => segment);
     const entitySet = pathSegments[pathSegments.length - 1];
 
     // Route to the appropriate entity set
@@ -380,7 +376,11 @@ async function handleServiceRootRequest(): Promise<APIGatewayProxyResult> {
 export const odataHandler = odata({
   model,
   serviceRoot: 'https://api.example.com/odata',
-  enableMetadata: true,
-  enableCount: true,
-  maxTop: 100
+  enable: {
+    metadata: true,
+    conformance: true
+  },
+  defaults: {
+    maxTop: 100
+  }
 })(handler);

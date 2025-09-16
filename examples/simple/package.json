@@ -12,10 +12,9 @@
   },
   "dependencies": {
     "middy-odata-v4": "file:../../",
-    "aws-lambda": "^1.0.7"
+    "@types/aws-lambda": "^8.10.130"
   },
   "devDependencies": {
-    "@types/aws-lambda": "^8.10.130",
     "typescript": "^5.3.3"
   },
   "keywords": [
