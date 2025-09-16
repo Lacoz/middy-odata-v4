@@ -1,4 +1,4 @@
-import type { ODataEntity } from "./types";
+import { ODataEntity } from './types';
 export interface CrudOptions {
     conformance?: "minimal" | "intermediate" | "advanced";
     ifMatch?: string;

@@ -1,4 +1,4 @@
-import type { ODataEntity } from "./types";
+import { ODataEntity } from './types';
 export interface ODataError {
     error: {
         code: string;

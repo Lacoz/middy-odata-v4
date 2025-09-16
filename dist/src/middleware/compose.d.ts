@@ -1,4 +1,4 @@
-import type { MiddlewareObj } from "@middy/core";
+import { MiddlewareObj } from '@middy/core';
 /**
  * Composes multiple middlewares into a single middleware following Middy's onion pattern
  * @param middlewares Array of middlewares to compose

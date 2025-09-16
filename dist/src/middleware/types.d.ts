@@ -1,5 +1,5 @@
-import type { MiddlewareObj } from "@middy/core";
-import type { EdmModel, ODataQueryOptions } from "../core/types";
+import { MiddlewareObj } from '@middy/core';
+import { EdmModel, ODataQueryOptions } from '../core/types';
 export interface ODataMiddlewareContext {
     model: EdmModel;
     serviceRoot: string;

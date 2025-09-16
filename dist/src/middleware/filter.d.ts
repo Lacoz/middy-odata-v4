@@ -1,5 +1,5 @@
-import type { MiddlewareObj } from "@middy/core";
-import type { ODataFilterOptions } from "./types";
+import { MiddlewareObj } from '@middy/core';
+import { ODataFilterOptions } from './types';
 /**
  * OData Filter Middleware
  *

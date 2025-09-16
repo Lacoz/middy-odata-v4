@@ -1,5 +1,5 @@
-import type { MiddlewareObj } from "@middy/core";
-import type { ODataErrorOptions, ODataMiddlewareContext } from "./types";
+import { MiddlewareObj } from '@middy/core';
+import { ODataErrorOptions, ODataMiddlewareContext } from './types';
 /**
  * OData Error Middleware
  *

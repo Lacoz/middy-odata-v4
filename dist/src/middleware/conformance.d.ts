@@ -1,5 +1,5 @@
-import type { MiddlewareObj } from "@middy/core";
-import type { ODataConformanceOptions, ODataMiddlewareContext } from "./types";
+import { MiddlewareObj } from '@middy/core';
+import { ODataConformanceOptions, ODataMiddlewareContext } from './types';
 /**
  * OData Conformance Middleware
  *

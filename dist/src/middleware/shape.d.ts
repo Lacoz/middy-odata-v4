@@ -1,5 +1,5 @@
-import type { MiddlewareObj } from "@middy/core";
-import type { ODataShapeOptions } from "./types";
+import { MiddlewareObj } from '@middy/core';
+import { ODataShapeOptions } from './types';
 /**
  * OData Shape Middleware
  *

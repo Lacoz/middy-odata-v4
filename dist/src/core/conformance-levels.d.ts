@@ -1,4 +1,4 @@
-import type { ODataEntity } from "./types";
+import { ODataEntity } from './types';
 export type ConformanceLevel = "minimal" | "intermediate" | "advanced";
 export interface ConformanceOptions {
     conformance: ConformanceLevel;

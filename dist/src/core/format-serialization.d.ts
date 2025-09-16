@@ -1,4 +1,4 @@
-import type { ODataEntity } from "./types";
+import { ODataEntity } from './types';
 export interface SerializationOptions {
     format?: "json" | "xml" | "atom" | "csv" | "text";
     serviceRoot?: string;

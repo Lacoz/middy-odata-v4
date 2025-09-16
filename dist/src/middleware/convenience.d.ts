@@ -1,5 +1,5 @@
-import type { MiddlewareObj } from "@middy/core";
-import type { ODataParseOptions, ODataShapeOptions, ODataFilterOptions, ODataPaginationOptions, ODataSerializeOptions, ODataErrorOptions, ODataFunctionsOptions, ODataMetadataOptions, ODataConformanceOptions } from "./types";
+import { MiddlewareObj } from '@middy/core';
+import { ODataParseOptions, ODataShapeOptions, ODataFilterOptions, ODataPaginationOptions, ODataSerializeOptions, ODataErrorOptions, ODataFunctionsOptions, ODataMetadataOptions, ODataConformanceOptions } from './types';
 /**
  * Convenience middleware arrays for users who prefer explicit chaining
  * These provide pre-configured combinations of middlewares for common use cases

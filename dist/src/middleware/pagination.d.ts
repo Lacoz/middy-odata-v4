@@ -1,5 +1,5 @@
-import type { MiddlewareObj } from "@middy/core";
-import type { ODataPaginationOptions } from "./types";
+import { MiddlewareObj } from '@middy/core';
+import { ODataPaginationOptions } from './types';
 /**
  * OData Pagination Middleware
  *

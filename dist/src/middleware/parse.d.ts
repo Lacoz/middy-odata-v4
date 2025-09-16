@@ -1,5 +1,5 @@
-import type { MiddlewareObj } from "@middy/core";
-import type { ODataParseOptions } from "./types";
+import { MiddlewareObj } from '@middy/core';
+import { ODataParseOptions } from './types';
 /**
  * OData Parse Middleware
  *

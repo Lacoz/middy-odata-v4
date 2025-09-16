@@ -1,5 +1,5 @@
-import type { MiddlewareObj } from "@middy/core";
-import type { ODataSerializeOptions } from "./types";
+import { MiddlewareObj } from '@middy/core';
+import { ODataSerializeOptions } from './types';
 /**
  * OData Serialize Middleware
  *

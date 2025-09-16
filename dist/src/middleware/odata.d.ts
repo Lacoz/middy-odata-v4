@@ -1,6 +1,6 @@
-import type { MiddlewareObj } from "@middy/core";
-import type { EdmModel } from "../core/types";
-import type { ODataMiddlewareContext } from "./types";
+import { MiddlewareObj } from '@middy/core';
+import { EdmModel } from '../core/types';
+import { ODataMiddlewareContext } from './types';
 export interface ODataOptions {
     model: EdmModel;
     serviceRoot: string | ((event: any) => string);
