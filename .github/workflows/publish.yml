@@ -1,43 +1,44 @@
-name: Publish
+# DISABLED: Publishing is handled manually from local machine
+# name: Publish
 
-on:
-  push:
-    branches: [main]
+# on:
+#   push:
+#     branches: [main]
 
-jobs:
-  publish:
-    name: Publish to npm
-    runs-on: ubuntu-latest
-    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+# jobs:
+#   publish:
+#     name: Publish to npm
+#     runs-on: ubuntu-latest
+#     if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
     
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+#         with:
+#           fetch-depth: 0
+#           token: ${{ secrets.GITHUB_TOKEN }}
           
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+#       - name: Setup pnpm
+#         uses: pnpm/action-setup@v4
+        
+#       - name: Setup Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: 22
+#           cache: pnpm
+#           registry-url: https://registry.npmjs.org/
           
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-          registry-url: https://registry.npmjs.org/
-          
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+#       - name: Install dependencies
+#         run: pnpm install --frozen-lockfile
         
-      - name: Build
-        run: pnpm build
+#       - name: Build
+#         run: pnpm build
         
-      - name: Run tests
-        run: pnpm test
+#       - name: Run tests
+#         run: pnpm test
         
-      - name: Semantic Release
-        run: pnpm semantic-release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+#       - name: Semantic Release
+#         run: pnpm semantic-release
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

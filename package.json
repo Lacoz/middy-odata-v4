@@ -24,8 +24,7 @@
     "dev": "vitest",
     "typecheck": "tsc -p tsconfig.json",
     "lint": "eslint .",
-    "semantic-release": "semantic-release",
-    "release": "semantic-release"
+    "publish:manual": "pnpm build && pnpm publish"
   },
   "packageManager": "pnpm@10.15.1",
   "devDependencies": {
