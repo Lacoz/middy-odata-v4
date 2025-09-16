@@ -71,7 +71,8 @@ jobs:
           test -f examples/simple/index.ts
           test -f examples/simple/package.json
           test -f examples/simple/README.md
-          test -f examples/complex/index.ts
+          test -f examples/complex/model.ts
+          test -f examples/complex/data.ts
           test -f examples/complex/package.json
           test -f examples/complex/README.md
           echo "✅ All example files exist"
