@@ -24,8 +24,23 @@ for test_case in "${test_cases[@]}"; do
     # Create Lambda event
     event_json="{\"httpMethod\":\"GET\",\"path\":\"$path\",\"headers\":{\"Content-Type\":\"application/json\",\"OData-Version\":\"4.01\"},\"queryStringParameters\":null,\"pathParameters\":null,\"body\":null}"
     
-    # Run Lambda function
-    response=$(echo "$event_json" | docker run --rm -i --entrypoint="" lambda-test node test-runner.js 2>/dev/null)
+    # Run Lambda function directly
+    response=$(echo "$event_json" | docker run --rm -i --entrypoint="" lambda-test node -e "
+import('./index.mjs').then(module => {
+  const handler = module.handler;
+  let input = '';
+  process.stdin.on('data', chunk => input += chunk);
+  process.stdin.on('end', async () => {
+    try {
+      const event = JSON.parse(input);
+      const result = await handler(event);
+      console.log(JSON.stringify(result));
+    } catch (error) {
+      console.error('Error:', error.message);
+    }
+  });
+});
+" 2>/dev/null)
     
     if [ $? -eq 0 ] && [ -n "$response" ]; then
         status_code=$(echo "$response" | jq -r '.statusCode // "unknown"')

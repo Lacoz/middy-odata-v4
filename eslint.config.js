@@ -41,6 +41,6 @@ export default [
   },
   prettier,
   {
-    ignores: ["dist/**", "node_modules/**", "*.config.js"],
+    ignores: ["dist/**", "node_modules/**", "*.config.js", "examples/**"],
   },
 ];
