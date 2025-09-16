@@ -93,7 +93,7 @@ function applyConformanceToEntity<T extends ODataEntity>(
     }
     
     // Add ETag for intermediate conformance
-    result["@odata.etag"] = `"etag-${(result as any).id || 'default'}"`;
+    result["@odata.etag"] = `"etag-${(result as Record<string, unknown>).id || 'default'}"`;
   } else if (conformance === "advanced") {
     // Advanced conformance - all query options supported
     if (options.select) {
@@ -109,7 +109,7 @@ function applyConformanceToEntity<T extends ODataEntity>(
     }
     
     // Add ETag for advanced conformance
-    result["@odata.etag"] = `"etag-${(result as any).id || 'default'}"`;
+    result["@odata.etag"] = `"etag-${(result as Record<string, unknown>).id || 'default'}"`;
   }
   
   return result as T;

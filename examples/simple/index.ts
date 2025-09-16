@@ -3,6 +3,11 @@ import { odata } from "middy-odata-v4";
 import { EdmModel, ODataEntity } from "middy-odata-v4";
 import { generateMetadata, generateServiceDocument } from "middy-odata-v4";
 
+// Declare console for linting
+declare const console: {
+  error: (message: string, ...args: unknown[]) => void;
+};
+
 // Define the User entity type
 interface User extends ODataEntity {
   id: number;
@@ -96,10 +101,10 @@ export const handler = async (
       case 'Users':
         return await handleUsersRequest(event);
       case '$metadata':
-        return await handleMetadataRequest(event);
+        return await handleMetadataRequest();
       case '':
         // Handle service root requests
-        return await handleServiceRootRequest(event);
+        return await handleServiceRootRequest();
       default:
         return {
           statusCode: 404,
@@ -241,7 +246,7 @@ async function createUser(event: APIGatewayProxyEvent): Promise<APIGatewayProxyR
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newUser)
     };
-  } catch (error) {
+  } catch {
     return {
       statusCode: 400,
       headers: { 'Content-Type': 'application/json' },
@@ -285,7 +290,7 @@ async function updateUser(id: number, event: APIGatewayProxyEvent): Promise<APIG
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updatedUser)
     };
-  } catch (error) {
+  } catch {
     return {
       statusCode: 400,
       headers: { 'Content-Type': 'application/json' },
@@ -320,7 +325,7 @@ async function deleteUser(id: number): Promise<APIGatewayProxyResult> {
 }
 
 // Handle metadata requests using library functionality
-async function handleMetadataRequest(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
+async function handleMetadataRequest(): Promise<APIGatewayProxyResult> {
   try {
     const serviceRoot = 'https://api.example.com/odata';
     const metadata = generateMetadata(model, serviceRoot);
@@ -346,7 +351,7 @@ async function handleMetadataRequest(event: APIGatewayProxyEvent): Promise<APIGa
 }
 
 // Handle service root requests
-async function handleServiceRootRequest(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
+async function handleServiceRootRequest(): Promise<APIGatewayProxyResult> {
   try {
     const serviceRoot = 'https://api.example.com/odata';
     const serviceDocument = generateServiceDocument(model, serviceRoot);
