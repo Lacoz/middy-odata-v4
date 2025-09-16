@@ -1,6 +1,6 @@
 import type { MiddlewareObj } from "@middy/core";
 import type { ODataErrorOptions, ODataMiddlewareContext } from "./types";
-import { createODataError, formatODataError } from "../core/error-handling";
+import { toODataError } from "../core/errors";
 import { mergeMiddlewareOptions, getMiddlewareContext, setMiddlewareContext } from "./compose";
 
 const DEFAULT_ERROR_OPTIONS: ODataErrorOptions = {
@@ -55,25 +55,16 @@ export function odataError(options: Partial<ODataErrorOptions> = {}): Middleware
         }
 
         // Create OData-compliant error response
-        const odataError = createODataError(error, {
-          includeStackTrace: opts.includeStackTrace,
-          context: context,
-        });
-
-        // Format the error response
-        const errorResponse = formatODataError(odataError, {
-          format: "json",
-          prettyPrint: false,
-        });
+        const odataError = toODataError(error, error.message);
 
         // Set the response
         request.response = {
-          statusCode: odataError.statusCode,
+          statusCode: (error as any).statusCode || 500,
           headers: {
             "Content-Type": "application/json",
             "OData-Version": "4.0",
           },
-          body: JSON.stringify(errorResponse),
+          body: JSON.stringify(odataError),
         };
 
         // Update context with error information

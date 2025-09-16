@@ -26,23 +26,27 @@ import type {
  */
 
 // Core OData functionality (parsing, shaping, filtering, pagination, serialization)
-export const odataCore: Array<(options?: any) => MiddlewareObj> = [
-  odataParse,
-  odataShape,
-  odataFilter,
-  odataPagination,
-  odataSerialize,
-];
+export function odataCore(options: any): MiddlewareObj[] {
+  return [
+    odataParse(options),
+    odataShape(),
+    odataFilter(),
+    odataPagination(),
+    odataSerialize(),
+  ];
+}
 
 // Full OData functionality including error handling
-export const odataFull: Array<(options?: any) => MiddlewareObj> = [
-  odataParse,
-  odataShape,
-  odataFilter,
-  odataPagination,
-  odataSerialize,
-  odataError,
-];
+export function odataFull(options: any): MiddlewareObj[] {
+  return [
+    odataParse(options),
+    odataShape(),
+    odataFilter(),
+    odataPagination(),
+    odataSerialize(),
+    odataError(),
+  ];
+}
 
 // OData with functions and actions support
 export const odataWithFunctions: Array<(options?: any) => MiddlewareObj> = [
@@ -80,35 +84,70 @@ export const odataComplete: Array<(options?: any) => MiddlewareObj> = [
 ];
 
 // Lightweight OData (parsing and serialization only)
-export const odataLight: Array<(options?: any) => MiddlewareObj> = [
-  odataParse,
-  odataSerialize,
-];
+export function odataLight(options: any): MiddlewareObj[] {
+  return [
+    odataParse(options),
+    odataSerialize(),
+  ];
+}
 
 // OData for read-only operations (no functions/actions)
-export const odataReadOnly: Array<(options?: any) => MiddlewareObj> = [
-  odataParse,
-  odataShape,
-  odataFilter,
-  odataPagination,
-  odataSerialize,
-  odataError,
-];
+export function odataReadOnly(options: any): MiddlewareObj[] {
+  return [
+    odataParse(options),
+    odataShape(),
+    odataFilter(),
+    odataPagination(),
+    odataSerialize(),
+    odataError(),
+  ];
+}
 
 // OData for write operations (includes functions/actions)
-export const odataWrite: Array<(options?: any) => MiddlewareObj> = [
-  odataParse,
-  odataFunctions,
-  odataShape,
-  odataFilter,
-  odataPagination,
-  odataSerialize,
-  odataError,
-];
+export function odataWrite(options: any): MiddlewareObj[] {
+  return [
+    odataParse(options),
+    odataFunctions(),
+    odataShape(),
+    odataFilter(),
+    odataPagination(),
+    odataSerialize(),
+    odataError(),
+  ];
+}
 
 /**
  * Helper function to create middleware arrays with custom options
  */
+export function createMiddlewareArray(options: {
+  model: any;
+  serviceRoot: string;
+  include?: string[];
+  exclude?: string[];
+}): MiddlewareObj[] {
+  const { model, serviceRoot, include, exclude } = options;
+  
+  const allMiddlewares = {
+    parse: () => odataParse({ model, serviceRoot }),
+    shape: () => odataShape(),
+    filter: () => odataFilter(),
+    pagination: () => odataPagination(),
+    serialize: () => odataSerialize(),
+    error: () => odataError(),
+    functions: () => odataFunctions(),
+    metadata: () => odataMetadata(),
+    conformance: () => odataConformance(),
+  };
+  
+  const middlewareNames = include || Object.keys(allMiddlewares);
+  const excludedNames = exclude || [];
+  
+  return middlewareNames
+    .filter(name => !excludedNames.includes(name))
+    .map(name => allMiddlewares[name as keyof typeof allMiddlewares]())
+    .filter(Boolean);
+}
+
 export function createODataMiddlewareArray(
   middlewares: Array<(options?: any) => MiddlewareObj>,
   options: {
