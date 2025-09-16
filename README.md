@@ -116,30 +116,21 @@ For errors:
 - Prevents pathological expressions via depth/length limits
 - Timeouts and circuit-breakers for resolvers
 
-## Test files to be created
-
-- __tests__ / fixtures / edm.ts — minimal EDM model
-- __tests__ / fixtures / data.ts — sample entities and related data
-- __tests__ / parse.spec.ts — query parsing tests
-- __tests__ / shape.spec.ts — $select/$expand shaping tests
-- __tests__ / filter-orderby-paging.spec.ts — filter/orderby/top/skip/count
-- __tests__ / serialize.spec.ts — response formatting tests
-- __tests__ / errors.spec.ts — error format and validation tests
-- __tests__ / middleware.spec.ts — Middy integration and behavior
-
 ## Current Implementation Status
 
-✅ **Completed**: Complete test suite with 63 passing tests covering all OData v4.01 core functionality
-✅ **Completed**: Basic middleware structure following [Middy middleware writing guidelines](https://middy.js.org/docs/category/writing-middlewares)
-✅ **Completed**: Query parsing for $select, $orderby, $top, $skip, $count, $filter, $expand
-✅ **Completed**: Data shaping with $select projection
-✅ **Completed**: Basic ordering and pagination
-✅ **Completed**: OData response serialization
-✅ **Completed**: Error handling with OData error format
+✅ **Completed**: Modular middleware architecture with comprehensive test suite
+✅ **Completed**: Basic query parsing for $select, $orderby, $top, $skip, $count
+✅ **Completed**: Basic $filter parsing (evaluation partially implemented)
+✅ **Completed**: Basic $expand structure (functionality limited)
+✅ **Completed**: OData response serialization and error handling
+✅ **Completed**: Middleware composition and configuration system
 
-✅ **Completed**: Full OData v4.01 implementation with modular middleware architecture
-✅ **Completed**: 462 passing tests covering all OData v4.01 core functionality
-✅ **Completed**: Modular architecture supporting both pre-composed and individual middlewares
+🔄 **In Progress**: Full OData v4.01 functionality implementation
+- $filter evaluation needs completion
+- $expand navigation property resolution needs implementation
+- $search, $compute, $apply are disabled by default (minimal implementation)
+
+⚠️ **Note**: Some advanced features are still being implemented
 
 ## Architecture
 
@@ -400,12 +391,20 @@ const middleware = odata({
 
 ## Supported Query Options
 
+✅ **Fully Implemented**:
 - `$select` - Field selection
-- `$filter` - Filtering expressions  
 - `$orderby` - Sorting
 - `$top` / `$skip` - Pagination
 - `$count` - Include total count
-- `$expand` - Navigation property expansion
+
+🔄 **Partially Implemented**:
+- `$filter` - Basic parsing, evaluation needs completion
+- `$expand` - Structure exists, navigation resolution needs implementation
+
+⚠️ **Minimal Implementation** (disabled by default):
+- `$search` - Basic structure only
+- `$compute` - Basic structure only  
+- `$apply` - Basic structure only
 
 ## Examples
 
@@ -414,14 +413,19 @@ const middleware = odata({
 
 ## Implementation Status
 
-✅ **Completed**: Test suite (63 tests), basic middleware structure, query parsing, data shaping, serialization, error handling
+✅ **Completed**: Modular middleware architecture, basic query parsing, response serialization, error handling
 
-🔄 **In Progress**: Full OData v4.01 implementation to make all tests pass with real functionality
+🔄 **In Progress**: Full OData v4.01 functionality implementation
+- Complete $filter expression evaluation
+- Implement $expand navigation property resolution
+- Enhance $search, $compute, $apply functionality
+- Replace placeholder tests with actual implementations
 
 ### Next Steps
-- **After Phase**: Implement response processing to apply OData transformations
-- **Error Handling**: Add `onError` phase for OData error formatting  
-- **Full OData Logic**: Complete the actual OData v4.01 functionality
+- **Core Features**: Complete $filter and $expand implementations
+- **Advanced Features**: Implement $search, $compute, $apply
+- **Testing**: Enhance test coverage for advanced features
+- **Documentation**: Update examples to reflect actual capabilities
 
 ## References
 
