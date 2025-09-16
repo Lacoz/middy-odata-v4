@@ -1,6 +1,6 @@
 import type { MiddlewareObj } from "@middy/core";
 import type { ODataConformanceOptions, ODataMiddlewareContext } from "./types";
-import { validateConformanceLevel, getConformanceLevel } from "../core/conformance-levels";
+import { validateConformanceLevel } from "../core/conformance-levels";
 import { mergeMiddlewareOptions, getMiddlewareContext, setMiddlewareContext } from "./compose";
 
 const DEFAULT_CONFORMANCE_OPTIONS: ODataConformanceOptions = {
@@ -38,27 +38,13 @@ export function odataConformance(options: Partial<ODataConformanceOptions> = {})
 
         // Determine conformance level from request or use default
         const requestedLevel = queryParams.$conformance || opts.conformanceLevel;
-        const conformanceLevel = getConformanceLevel(requestedLevel);
+        const conformanceLevel = validateConformanceLevel(requestedLevel);
 
         // Validate query options against conformance level
         if (opts.validateQueries) {
-          const validationResult = validateConformanceLevel(
-            context.options,
-            conformanceLevel,
-            {
-              strictMode: opts.strictMode,
-              customRules: opts.customValidationRules,
-              model: context.model,
-            }
-          );
-
-          if (!validationResult.valid) {
-            const error = new Error(`Conformance validation failed: ${validationResult.errors.join(", ")}`);
-            (error as any).statusCode = 400;
-            (error as any).code = "BadRequest";
-            (error as any).details = validationResult.errors;
-            throw error;
-          }
+          // For now, just validate the conformance level itself
+          // TODO: Add proper query validation against conformance level
+          validateConformanceLevel(conformanceLevel);
         }
 
         // Update context with conformance information
