@@ -83,6 +83,20 @@ function parseFilterExpression(filter: string): FilterExpression {
     };
   }
   
+  if (filter === 'true') {
+    return {
+      type: 'literal',
+      value: true
+    };
+  }
+  
+  if (filter === 'false') {
+    return {
+      type: 'literal',
+      value: false
+    };
+  }
+  
   if (!isNaN(Number(filter))) {
     return {
       type: 'literal',
@@ -337,7 +351,6 @@ export function filterArray<T extends ODataEntity>(rows: T[], options: ODataQuer
     return rows.filter(row => evaluateExpression(expression, row));
   } catch (error) {
     // If filter parsing fails, return all rows
-    // eslint-disable-next-line no-undef
     console.warn('Filter parsing failed:', error);
     return rows;
   }

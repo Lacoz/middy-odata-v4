@@ -92,6 +92,16 @@ async function applyFilteringAndOrdering(
     return await filterAndOrderCollection(data, queryOptions, options);
   }
 
+  // Handle OData collection responses with { value: [...] } structure
+  if (data && typeof data === 'object' && 'value' in data && Array.isArray((data as any).value)) {
+    const collectionData = data as { value: unknown[]; [key: string]: unknown };
+    const filteredValue = await filterAndOrderCollection(collectionData.value, queryOptions, options);
+    return {
+      ...collectionData,
+      value: filteredValue
+    };
+  }
+
   // Handle single entity responses - filtering doesn't apply to single entities
   // but ordering might if it's a collection property
   if (data && typeof data === 'object') {
@@ -120,7 +130,7 @@ async function filterAndOrderCollection(
   // Apply $filter if present and enabled
   if (queryOptions.filter && options.enableFilter) {
     try {
-      filteredEntities = filterArray(filteredEntities as any[], queryOptions.filter);
+      filteredEntities = filterArray(filteredEntities as any[], queryOptions);
     } catch (error) {
       console.error('[OData Filter] Error applying filter:', error);
       // Continue with unfiltered data
@@ -130,7 +140,7 @@ async function filterAndOrderCollection(
   // Apply $orderby if present and enabled
   if (queryOptions.orderby && queryOptions.orderby.length > 0 && options.enableOrderby) {
     try {
-      filteredEntities = orderArray(filteredEntities as any[], queryOptions.orderby);
+      filteredEntities = orderArray(filteredEntities as any[], queryOptions);
     } catch (error) {
       console.error('[OData Filter] Error applying orderby:', error);
       // Continue with unordered data

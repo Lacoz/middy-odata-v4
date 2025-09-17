@@ -8,7 +8,8 @@
     "deploy": "./deploy.sh"
   },
   "dependencies": {
-    "middy-odata-v4": "file:../../"
+    "middy-odata-v4": "file:../../",
+    "@middy/core": "^5.0.0"
   },
   "devDependencies": {
     "typescript": "^5.3.3",

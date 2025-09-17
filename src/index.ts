@@ -3,6 +3,7 @@ export { odata } from "./middleware/odata";
 
 // Individual middlewares for advanced users
 export { odataParse } from "./middleware/parse";
+export { odataRouting } from "./middleware/routing";
 export { odataShape } from "./middleware/shape";
 export { odataFilter } from "./middleware/filter";
 export { odataPagination } from "./middleware/pagination";
@@ -30,6 +31,7 @@ export type {
   ODataOptions,
   ODataMiddlewareContext,
   ODataParseOptions,
+  ODataRoutingOptions,
   ODataShapeOptions,
   ODataFilterOptions,
   ODataPaginationOptions,

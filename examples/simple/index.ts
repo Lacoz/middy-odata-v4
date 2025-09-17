@@ -1,5 +1,6 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { EdmModel, generateMetadata, generateServiceDocument } from "middy-odata-v4";
+import { EdmModel, odata } from "middy-odata-v4";
+import middy from "@middy/core";
 
 // Simple User data
 const users = [
@@ -25,49 +26,35 @@ const model: EdmModel = {
   entitySets: [{ name: "Users", entityType: "User" }]
 };
 
-// Main Lambda handler
-export const handler = async (event: any): Promise<APIGatewayProxyResult> => {
-  // Handle both API Gateway and Lambda URL event formats
-  const path = event.path || event.rawPath || '/';
-  const method = event.httpMethod || event.requestContext?.http?.method || 'GET';
-  
-  // Debug: log the event to understand what we're receiving
-  console.log('Event received:', JSON.stringify(event, null, 2));
-  console.log('Path:', path, 'Method:', method);
-
-  // OData metadata endpoint
-  if (path === '/$metadata') {
-    const metadata = generateMetadata(model, 'https://api.example.com/odata');
-    return {
-      statusCode: 200,
-      headers: { 'Content-Type': 'application/json', 'OData-Version': '4.01' },
-      body: JSON.stringify(metadata)
-    };
-  }
-
-  // Service document
-  if (path === '/') {
-    const serviceDoc = generateServiceDocument(model, 'https://api.example.com/odata');
-    return {
-      statusCode: 200,
-      headers: { 'Content-Type': 'application/json', 'OData-Version': '4.01' },
-      body: JSON.stringify(serviceDoc)
-    };
-  }
-
-  // Users endpoint
-  if (path === '/Users') {
-    return {
-      statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ value: users })
-    };
-  }
-
-  // Not found
+// Base handler - now much simpler!
+const baseHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+  // The routing middleware will handle everything automatically
+  // This handler is only called if no route matches
   return {
     statusCode: 404,
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ error: { code: 'NotFound', message: 'Not found' } })
+    body: JSON.stringify({ error: 'Not found' })
   };
 };
+
+// Configure the OData middleware with automatic routing and data providers
+export const handler = middy(baseHandler).use(odata({
+  model,
+  serviceRoot: "https://api.example.com/odata",
+  routing: {
+    dataProviders: {
+      // Automatically provide data for the Users entity set
+      Users: () => users
+    },
+    enableRouting: true,
+    strictMode: false
+  },
+  enable: {
+    metadata: true,
+    conformance: true,
+    filter: true,
+    pagination: true,
+    shape: true,
+    serialize: true
+  }
+}));

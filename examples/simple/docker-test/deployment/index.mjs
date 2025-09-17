@@ -1,4 +1,5 @@
-import { generateMetadata, generateServiceDocument } from "middy-odata-v4";
+import { odata } from "middy-odata-v4";
+import middy from "@middy/core";
 // Simple User data
 const users = [
     { id: 1, name: "Alice", email: "alice@example.com", age: 30, active: true },
@@ -21,44 +22,46 @@ const model = {
         }],
     entitySets: [{ name: "Users", entityType: "User" }]
 };
-// Main Lambda handler
-export const handler = async (event) => {
-    // Handle both API Gateway and Lambda URL event formats
-    const path = event.path || event.rawPath || '/';
-    const method = event.httpMethod || event.requestContext?.http?.method || 'GET';
-    // Debug: log the event to understand what we're receiving
+// Clean handler - the middleware handles all OData logic
+const baseHandler = async (event) => {
     console.log('Event received:', JSON.stringify(event, null, 2));
-    console.log('Path:', path, 'Method:', method);
-    // OData metadata endpoint
-    if (path === '/$metadata') {
-        const metadata = generateMetadata(model, 'https://api.example.com/odata');
-        return {
-            statusCode: 200,
-            headers: { 'Content-Type': 'application/json', 'OData-Version': '4.01' },
-            body: JSON.stringify(metadata)
-        };
+    console.log('Query parameters:', event.queryStringParameters);
+    console.log('Raw query string:', event.rawQueryString);
+    console.log('Request context:', event.requestContext);
+    // Debug: Test URLSearchParams parsing
+    if (event.rawQueryString) {
+        const parsedFromRaw = Object.fromEntries(new URLSearchParams(event.rawQueryString));
+        console.log('Parsed from rawQueryString:', parsedFromRaw);
     }
-    // Service document
-    if (path === '/') {
-        const serviceDoc = generateServiceDocument(model, 'https://api.example.com/odata');
-        return {
-            statusCode: 200,
-            headers: { 'Content-Type': 'application/json', 'OData-Version': '4.01' },
-            body: JSON.stringify(serviceDoc)
-        };
-    }
-    // Users endpoint
-    if (path === '/Users') {
+    // Extract the path to determine which entity set to return
+    // Lambda URLs use rawPath, API Gateway uses path
+    const path = event.rawPath || event.path || '/';
+    console.log('Extracted path:', path);
+    // Return the appropriate data - middleware will handle filtering, sorting, etc.
+    if (path.startsWith('/Users')) {
         return {
             statusCode: 200,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ value: users })
         };
     }
-    // Not found
+    // For other paths, return empty - middleware will handle metadata, etc.
     return {
-        statusCode: 404,
+        statusCode: 200,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: { code: 'NotFound', message: 'Not found' } })
+        body: JSON.stringify({})
     };
 };
+// Configure the OData middleware - it handles all the complex logic
+export const handler = middy(baseHandler).use(odata({
+    model,
+    serviceRoot: "https://api.example.com/odata",
+    enable: {
+        metadata: true,
+        conformance: true,
+        filter: true,
+        pagination: true,
+        shape: true,
+        serialize: true
+    }
+}));

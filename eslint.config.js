@@ -15,6 +15,7 @@ export default [
       },
       globals: {
         URLSearchParams: "readonly",
+        console: "readonly",
       },
     },
     plugins: {

@@ -1,6 +1,6 @@
 import type { MiddlewareObj } from "@middy/core";
 import type { EdmModel } from "../core/types";
-import type { ODataMiddlewareContext } from "./types";
+import type { ODataMiddlewareContext, ODataOptions } from "./types";
 import { composeMiddlewares } from "./compose";
 import { odataParse } from "./parse";
 import { odataShape } from "./shape";
@@ -11,99 +11,8 @@ import { odataError } from "./error";
 import { odataFunctions } from "./functions";
 import { odataMetadata } from "./metadata";
 import { odataConformance } from "./conformance";
+import { odataRouting } from "./routing";
 
-// Main OData middleware configuration interface
-export interface ODataOptions {
-  // Required configuration
-  model: EdmModel;
-  serviceRoot: string | ((event: any) => string);
-
-  // Feature enablement
-  enable?: {
-    parse?: boolean;
-    shape?: boolean;
-    filter?: boolean;
-    pagination?: boolean;
-    serialize?: boolean;
-    error?: boolean;
-    functions?: boolean;
-    metadata?: boolean;
-    conformance?: boolean;
-    // Advanced features
-    search?: boolean;
-    compute?: boolean;
-    apply?: boolean;
-  };
-
-  // Default values and limits
-  defaults?: {
-    maxTop?: number;
-    defaultTop?: number;
-    maxExpandDepth?: number;
-    maxFilterDepth?: number;
-  };
-
-  // Individual middleware options
-  parse?: {
-    validateAgainstModel?: boolean;
-    strictMode?: boolean;
-  };
-
-  shape?: {
-    enableExpand?: boolean;
-    maxExpandDepth?: number;
-    expandResolvers?: Record<string, (...args: unknown[]) => unknown>;
-  };
-
-  filter?: {
-    enableFilter?: boolean;
-    enableOrderby?: boolean;
-    maxFilterDepth?: number;
-    caseSensitive?: boolean;
-  };
-
-  pagination?: {
-    maxTop?: number;
-    defaultTop?: number;
-    enableCount?: boolean;
-  };
-
-  serialize?: {
-    format?: "json" | "xml" | "atom";
-    includeMetadata?: boolean;
-    prettyPrint?: boolean;
-  };
-
-  error?: {
-    includeStackTrace?: boolean;
-    logErrors?: boolean;
-    customErrorHandler?: (error: Error, context: ODataMiddlewareContext) => void;
-  };
-
-  functions?: {
-    enableFunctions?: boolean;
-    enableActions?: boolean;
-    functionResolvers?: Record<string, (...args: unknown[]) => unknown>;
-    actionResolvers?: Record<string, (...args: unknown[]) => unknown>;
-    validateParameters?: boolean;
-  };
-
-  metadata?: {
-    enableMetadata?: boolean;
-    enableServiceDocument?: boolean;
-    includeAnnotations?: boolean;
-    customAnnotations?: Record<string, any>;
-    metadataPath?: string;
-    serviceDocumentPath?: string;
-  };
-
-  conformance?: {
-    conformanceLevel?: "minimal" | "intermediate" | "advanced";
-    strictMode?: boolean;
-    validateQueries?: boolean;
-    customValidationRules?: Record<string, (...args: unknown[]) => unknown>;
-  };
-}
 
 const DEFAULT_OPTIONS: ODataOptions = {
   model: {} as EdmModel,
@@ -163,7 +72,17 @@ export function odata(options: ODataOptions): MiddlewareObj {
     }));
   }
 
-  // 2. Conformance middleware (early - validates queries)
+  // 2. Routing middleware (early - handles entity set routing and data providers)
+  if (opts.routing?.enableRouting !== false) {
+    middlewares.push(odataRouting({
+      model: opts.model,
+      dataProviders: opts.routing?.dataProviders ?? {},
+      enableRouting: opts.routing?.enableRouting ?? true,
+      strictMode: opts.routing?.strictMode ?? false,
+    }));
+  }
+
+  // 3. Conformance middleware (early - validates queries)
   if (opts.enable?.conformance !== false) {
     middlewares.push(odataConformance({
       conformanceLevel: opts.conformance?.conformanceLevel ?? "minimal",
@@ -173,7 +92,7 @@ export function odata(options: ODataOptions): MiddlewareObj {
     }));
   }
 
-  // 3. Functions middleware (early - handles function/action calls)
+  // 4. Functions middleware (early - handles function/action calls)
   if (opts.enable?.functions !== false) {
     middlewares.push(odataFunctions({
       enableFunctions: opts.functions?.enableFunctions ?? true,
@@ -184,7 +103,7 @@ export function odata(options: ODataOptions): MiddlewareObj {
     }));
   }
 
-  // 4. Metadata middleware (early - handles metadata requests)
+  // 5. Metadata middleware (early - handles metadata requests)
   if (opts.enable?.metadata !== false) {
     middlewares.push(odataMetadata({
       enableMetadata: opts.metadata?.enableMetadata ?? true,
@@ -196,7 +115,7 @@ export function odata(options: ODataOptions): MiddlewareObj {
     }));
   }
 
-  // 5. Shape middleware (after - transforms response data)
+  // 6. Shape middleware (after - transforms response data)
   if (opts.enable?.shape !== false) {
     middlewares.push(odataShape({
       enableExpand: opts.shape?.enableExpand ?? true,
@@ -205,7 +124,7 @@ export function odata(options: ODataOptions): MiddlewareObj {
     }));
   }
 
-  // 6. Filter middleware (after - filters and sorts data)
+  // 7. Filter middleware (after - filters and sorts data)
   if (opts.enable?.filter !== false) {
     middlewares.push(odataFilter({
       enableFilter: opts.filter?.enableFilter ?? true,
@@ -215,7 +134,7 @@ export function odata(options: ODataOptions): MiddlewareObj {
     }));
   }
 
-  // 7. Pagination middleware (after - paginates data)
+  // 8. Pagination middleware (after - paginates data)
   if (opts.enable?.pagination !== false) {
     middlewares.push(odataPagination({
       maxTop: opts.pagination?.maxTop ?? opts.defaults?.maxTop ?? 1000,
@@ -224,7 +143,7 @@ export function odata(options: ODataOptions): MiddlewareObj {
     }));
   }
 
-  // 8. Serialize middleware (last - formats response)
+  // 9. Serialize middleware (last - formats response)
   if (opts.enable?.serialize !== false) {
     middlewares.push(odataSerialize({
       format: opts.serialize?.format ?? "json",
@@ -233,7 +152,7 @@ export function odata(options: ODataOptions): MiddlewareObj {
     }));
   }
 
-  // 9. Error middleware (always last - handles errors)
+  // 10. Error middleware (always last - handles errors)
   if (opts.enable?.error !== false) {
     middlewares.push(odataError({
       includeStackTrace: opts.error?.includeStackTrace ?? false,

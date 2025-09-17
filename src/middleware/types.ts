@@ -99,6 +99,14 @@ export interface ODataConformanceOptions {
   [key: string]: unknown;
 }
 
+export interface ODataRoutingOptions {
+  model: EdmModel;
+  dataProviders?: Record<string, () => Promise<unknown[]> | unknown[]>;
+  enableRouting?: boolean;
+  strictMode?: boolean;
+  [key: string]: unknown;
+}
+
 // Main OData options that combines all individual options
 export interface ODataOptions {
   model: EdmModel;
@@ -112,8 +120,18 @@ export interface ODataOptions {
   functions?: Partial<ODataFunctionsOptions>;
   metadata?: Partial<ODataMetadataOptions>;
   conformance?: Partial<ODataConformanceOptions>;
+  routing?: Partial<ODataRoutingOptions>;
   // Legacy options for backward compatibility
   enable?: {
+    parse?: boolean;
+    shape?: boolean;
+    filter?: boolean;
+    pagination?: boolean;
+    serialize?: boolean;
+    error?: boolean;
+    functions?: boolean;
+    metadata?: boolean;
+    conformance?: boolean;
     compute?: boolean;
     apply?: boolean;
     search?: boolean;
@@ -121,6 +139,8 @@ export interface ODataOptions {
   defaults?: {
     maxTop?: number;
     defaultTop?: number;
+    maxExpandDepth?: number;
+    maxFilterDepth?: number;
   };
 }
 
@@ -130,14 +150,15 @@ export type MiddlewarePhase = "before" | "after" | "onError";
 // Middleware execution order
 export const MIDDLEWARE_ORDER = [
   "parse",
+  "routing",
+  "conformance",
+  "functions",
+  "metadata",
   "shape", 
   "filter",
   "pagination",
   "serialize",
-  "error",
-  "functions",
-  "metadata",
-  "conformance"
+  "error"
 ] as const;
 
 export type MiddlewareName = typeof MIDDLEWARE_ORDER[number];

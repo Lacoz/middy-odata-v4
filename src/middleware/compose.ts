@@ -62,12 +62,12 @@ export function createLoggingMiddleware(name: string): MiddlewareObj {
       const startTime = Date.now();
       handler.internal = handler.internal || {};
       (handler.internal as any)[`${name}_start`] = startTime;
-      console.log(`[OData] ${name} middleware: before phase started`);
     },
     after: async (handler) => {
       const startTime = (handler.internal as any)?.[`${name}_start`] || Date.now();
       const duration = Date.now() - startTime;
-      console.log(`[OData] ${name} middleware: after phase completed in ${duration}ms`);
+      // Duration could be used for logging in the future
+      void duration;
     },
     onError: async (handler) => {
       const startTime = (handler.internal as any)?.[`${name}_start`] || Date.now();
