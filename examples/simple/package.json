@@ -5,7 +5,9 @@
   "main": "dist/index.mjs",
   "scripts": {
     "build": "tsc && mv dist/index.js dist/index.mjs",
-    "deploy": "./deploy.sh"
+    "deploy": "./deploy.sh",
+    "package": "pnpm run build && pnpm run zip",
+    "zip": "cd dist && zip -r ../simple-odata-example.zip . -x \"*.map\""
   },
   "dependencies": {
     "middy-odata-v4": "file:../../",

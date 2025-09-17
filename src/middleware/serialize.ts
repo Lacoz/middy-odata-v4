@@ -52,6 +52,9 @@ export function odataSerialize(options: Partial<ODataSerializeOptions> = {}): Mi
         const serializedData = await applySerialization(responseData, context, opts, request);
 
         // Update response
+        console.log('[OData Serialize] Current response:', JSON.stringify(request.response, null, 2));
+        console.log('[OData Serialize] Serialized data:', JSON.stringify(serializedData, null, 2));
+        
         if (request.response) {
           request.response.body = JSON.stringify(serializedData);
           
@@ -67,6 +70,8 @@ export function odataSerialize(options: Partial<ODataSerializeOptions> = {}): Mi
           // Add OData-specific headers
           addODataHeaders(request.response, context, opts);
         }
+        
+        console.log('[OData Serialize] Final response:', JSON.stringify(request.response, null, 2));
 
         // Update context with serialized data
         context.data = serializedData;

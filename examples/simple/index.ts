@@ -27,13 +27,19 @@ const model: EdmModel = {
 };
 
 // Base handler - now much simpler!
-const baseHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+const baseHandler = async (event: APIGatewayProxyEvent, context: any): Promise<APIGatewayProxyResult> => {
+  // Debug logging
+  console.log('Base handler called with path:', event.path);
+  console.log('Event:', JSON.stringify(event, null, 2));
+  console.log('Context:', JSON.stringify(context, null, 2));
+  
   // The routing middleware will handle everything automatically
   // This handler is only called if no route matches
+  // Return a 444 response to verify Middy is working
   return {
-    statusCode: 404,
+    statusCode: 444,
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ error: 'Not found' })
+    body: JSON.stringify({ error: 'No route matched - Middy is working' })
   };
 };
 
@@ -50,11 +56,11 @@ export const handler = middy(baseHandler).use(odata({
     strictMode: false
   },
   enable: {
-    metadata: true,
-    conformance: true,
-    filter: true,
-    pagination: true,
-    shape: true,
-    serialize: true
+    metadata: false,
+    conformance: false,
+    filter: false,
+    pagination: false,
+    shape: false,
+    serialize: false
   }
 }));

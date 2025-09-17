@@ -30,7 +30,7 @@ export function odataRouting(options: Partial<ODataRoutingOptions> = {}): Middle
   const opts = mergeMiddlewareOptions(DEFAULT_ROUTING_OPTIONS, options);
 
   return {
-    before: async (request: any) => {
+    after: async (request: any) => {
       try {
         const context = getMiddlewareContext(request);
         
@@ -41,14 +41,18 @@ export function odataRouting(options: Partial<ODataRoutingOptions> = {}): Middle
         const { event } = request;
         const path = event.path || event.rawPath || "";
         
+        console.log('[OData Routing] Processing path:', path);
+        
         // Skip if this is already handled by other middleware (metadata, functions, etc.)
         if (path.endsWith('/$metadata') || path.endsWith('/%24metadata') || 
             path === '/' || path.startsWith('/functions/') || path.startsWith('/actions/')) {
+          console.log('[OData Routing] Skipping path (handled by other middleware):', path);
           return;
         }
 
         // Extract entity set name from path
         const entitySetName = extractEntitySetName(path, opts.model as EdmModel);
+        console.log('[OData Routing] Extracted entity set name:', entitySetName);
         
         if (entitySetName) {
           // Set entity set in context
@@ -56,6 +60,7 @@ export function odataRouting(options: Partial<ODataRoutingOptions> = {}): Middle
           
           // Get data from data provider
           const data = await getEntitySetData(entitySetName, opts as ODataRoutingOptions);
+          console.log('[OData Routing] Got data for', entitySetName, ':', data?.length, 'items');
           
           if (data !== undefined) {
             // Set the response with entity set data
@@ -68,9 +73,14 @@ export function odataRouting(options: Partial<ODataRoutingOptions> = {}): Middle
               body: JSON.stringify({ value: data })
             };
             
+            console.log('[OData Routing] Set response for', entitySetName);
+            console.log('[OData Routing] Response set:', JSON.stringify(request.response, null, 2));
             // Update context with data
             context.data = { value: data };
             setMiddlewareContext(request, context);
+            
+            // Return early to prevent base handler from being called
+            return request.response;
           } else if (opts.strictMode) {
             // In strict mode, return 404 if no data provider is configured
             request.response = {

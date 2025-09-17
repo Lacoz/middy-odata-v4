@@ -22,40 +22,28 @@ const model = {
         }],
     entitySets: [{ name: "Users", entityType: "User" }]
 };
-// Clean handler - the middleware handles all OData logic
+// Base handler - now much simpler!
 const baseHandler = async (event) => {
-    console.log('Event received:', JSON.stringify(event, null, 2));
-    console.log('Query parameters:', event.queryStringParameters);
-    console.log('Raw query string:', event.rawQueryString);
-    console.log('Request context:', event.requestContext);
-    // Debug: Test URLSearchParams parsing
-    if (event.rawQueryString) {
-        const parsedFromRaw = Object.fromEntries(new URLSearchParams(event.rawQueryString));
-        console.log('Parsed from rawQueryString:', parsedFromRaw);
-    }
-    // Extract the path to determine which entity set to return
-    // Lambda URLs use rawPath, API Gateway uses path
-    const path = event.rawPath || event.path || '/';
-    console.log('Extracted path:', path);
-    // Return the appropriate data - middleware will handle filtering, sorting, etc.
-    if (path.startsWith('/Users')) {
-        return {
-            statusCode: 200,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ value: users })
-        };
-    }
-    // For other paths, return empty - middleware will handle metadata, etc.
+    // The routing middleware will handle everything automatically
+    // This handler is only called if no route matches
     return {
-        statusCode: 200,
+        statusCode: 404,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({})
+        body: JSON.stringify({ error: 'Not found' })
     };
 };
-// Configure the OData middleware - it handles all the complex logic
+// Configure the OData middleware with automatic routing and data providers
 export const handler = middy(baseHandler).use(odata({
     model,
     serviceRoot: "https://api.example.com/odata",
+    routing: {
+        dataProviders: {
+            // Automatically provide data for the Users entity set
+            Users: () => users
+        },
+        enableRouting: true,
+        strictMode: false
+    },
     enable: {
         metadata: true,
         conformance: true,
