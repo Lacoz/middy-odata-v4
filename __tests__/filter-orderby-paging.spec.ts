@@ -10,25 +10,54 @@ describe("Filtering, ordering, pagination", () => {
     });
 
     it("should support basic comparison operators", () => {
-      // TODO: Implement filter evaluation
-      // const result = filterArray(PRODUCTS, { filter: "price gt 10" });
-      // expect(result).toHaveLength(2);
-      expect(true).toBe(true);
+      const greaterThan = filterArray(PRODUCTS, { filter: "price gt 9" });
+      expect(greaterThan.map(p => p.name)).toEqual(["A", "C"]);
+
+      const equals = filterArray(PRODUCTS, { filter: "status eq 'Inactive'" });
+      expect(equals).toHaveLength(1);
+      expect(equals[0].name).toBe("B");
     });
 
     it("should support logical operators (and, or, not)", () => {
-      // TODO: Implement logical operators
-      expect(true).toBe(true);
+      const conjunction = filterArray(PRODUCTS, {
+        filter: "price gt 9 and categoryId eq 1"
+      });
+      expect(conjunction.map(p => p.name)).toEqual(["A", "C"]);
+
+      const disjunction = filterArray(PRODUCTS, {
+        filter: "price lt 8 or status eq 'Inactive'"
+      });
+      expect(disjunction.map(p => p.name)).toEqual(["B"]);
+
+      const negation = filterArray(PRODUCTS, {
+        filter: "not status eq 'Inactive'"
+      });
+      expect(negation.map(p => p.name)).toEqual(["A", "C"]);
     });
 
     it("should support string functions (startswith, endswith, contains)", () => {
-      // TODO: Implement string functions
-      expect(true).toBe(true);
+      const startsWith = filterArray(PRODUCTS, { filter: "startswith(name, 'A')" });
+      expect(startsWith.map(p => p.name)).toEqual(["A"]);
+
+      const contains = filterArray(PRODUCTS, { filter: "contains(name, 'B')" });
+      expect(contains.map(p => p.name)).toEqual(["B"]);
+
+      const endsWith = filterArray(PRODUCTS, { filter: "endswith(status, 'ive')" });
+      expect(endsWith.map(p => p.status)).toEqual(["Active", "Inactive", "Active"]);
     });
 
     it("should handle null values correctly", () => {
-      // TODO: Implement null handling
-      expect(true).toBe(true);
+      const dataWithNulls = [
+        ...PRODUCTS,
+        { id: 4, name: "D", price: null, categoryId: 3, status: "Pending", customPrice: null }
+      ];
+
+      const nullMatches = filterArray(dataWithNulls, { filter: "customPrice eq null" });
+      expect(nullMatches).toHaveLength(1);
+      expect(nullMatches[0].name).toBe("D");
+
+      const nonNullMatches = filterArray(dataWithNulls, { filter: "customPrice ne null" });
+      expect(nonNullMatches.map(p => p.name)).toEqual(["A", "B", "C"]);
     });
   });
 
@@ -129,8 +158,11 @@ describe("Filtering, ordering, pagination", () => {
 
   describe("$count", () => {
     it("should return total count before pagination", () => {
-      // TODO: Implement count functionality
-      expect(true).toBe(true);
+      const filtered = filterArray(PRODUCTS, { filter: "price ge 7" });
+      expect(filtered).toHaveLength(3);
+
+      const paged = paginateArray(filtered, { top: 1, skip: 1 });
+      expect(paged).toEqual([PRODUCTS[1]]);
     });
   });
 });

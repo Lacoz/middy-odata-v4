@@ -3,10 +3,11 @@ import type { ODataEntity, ODataQueryOptions } from "./types";
 
 // Simple filter expression parser and evaluator
 interface FilterExpression {
-  type: 'comparison' | 'logical' | 'function' | 'property' | 'literal';
+  type: 'comparison' | 'logical' | 'function' | 'property' | 'literal' | 'unary';
   operator?: string;
   left?: FilterExpression;
   right?: FilterExpression;
+  operand?: FilterExpression;
   property?: string;
   value?: any;
   function?: string;
@@ -27,7 +28,7 @@ function parseFilterExpression(filter: string): FilterExpression {
       right: parseFilterExpression(parts[1].trim())
     };
   }
-  
+
   if (filter.includes(' or ')) {
     const parts = splitByOperator(filter, ' or ');
     return {
@@ -35,6 +36,14 @@ function parseFilterExpression(filter: string): FilterExpression {
       operator: 'or',
       left: parseFilterExpression(parts[0].trim()),
       right: parseFilterExpression(parts[1].trim())
+    };
+  }
+
+  if (filter.startsWith('not ')) {
+    return {
+      type: 'unary',
+      operator: 'not',
+      operand: parseFilterExpression(filter.slice(4).trim())
     };
   }
   
@@ -150,10 +159,13 @@ function evaluateExpression(expr: FilterExpression, entity: any): any {
       const rightResult = evaluateExpression(expr.right!, entity);
       return evaluateLogical(leftResult, expr.operator!, rightResult);
     }
-    
+
+    case 'unary':
+      return evaluateUnary(expr.operator!, evaluateExpression(expr.operand!, entity));
+
     case 'function':
       return evaluateFunction(expr.function!, expr.args!, entity);
-    
+
     default:
       return false;
   }
@@ -190,6 +202,15 @@ function evaluateLogical(left: boolean, operator: string, right: boolean): boole
     case 'and': return left && right;
     case 'or': return left || right;
     default: return false;
+  }
+}
+
+function evaluateUnary(operator: string, operand: boolean): boolean {
+  switch (operator) {
+    case 'not':
+      return !operand;
+    default:
+      return false;
   }
 }
 
