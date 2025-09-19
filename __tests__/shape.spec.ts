@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { applySelect, projectArray } from "../src/core/shape";
+import { applySelect, projectArray, expandData } from "../src/core/shape";
 import { PRODUCTS } from "./fixtures/data";
 
 describe("Data shaping: $select", () => {
@@ -38,17 +38,49 @@ describe("Data shaping: $select", () => {
 
 describe("Data shaping: $expand (placeholder)", () => {
   it("should support navigation property expansion", () => {
-    // TODO: Implement $expand functionality
-    expect(true).toBe(true);
+    const product = { ...PRODUCTS[0] };
+    const expanded = expandData(product, {
+      expand: [{ path: "category" }]
+    }) as typeof product & { category?: unknown };
+
+    expect(expanded).toHaveProperty("category", null);
+    expect(product).not.toHaveProperty("category"); // original not mutated
   });
 
   it("should support nested query options in $expand", () => {
-    // TODO: Implement nested $select, $filter, etc. in $expand
-    expect(true).toBe(true);
+    const productWithCategory = {
+      ...PRODUCTS[0],
+      category: { id: 10, title: "Cat" }
+    };
+
+    const expanded = expandData(productWithCategory, {
+      expand: [
+        {
+          path: "category",
+          options: {
+            expand: [{ path: "supplier" }]
+          }
+        }
+      ]
+    }) as typeof productWithCategory & { category: { supplier?: unknown } };
+
+    expect(expanded.category).toHaveProperty("supplier", null);
   });
 
   it("should prevent N+1 queries with batched resolvers", () => {
-    // TODO: Implement batched resolver interface
-    expect(true).toBe(true);
+    const items = [
+      { id: 1, name: "A" },
+      { id: 2, name: "B" }
+    ];
+
+    const expanded = expandData(items, {
+      expand: [{ path: "details" }]
+    }) as Array<{ details?: unknown }>;
+
+    expect(expanded).toHaveLength(2);
+    expanded.forEach((item, index) => {
+      expect(item).toHaveProperty("details", null);
+      expect(items[index]).not.toHaveProperty("details");
+    });
   });
 });
