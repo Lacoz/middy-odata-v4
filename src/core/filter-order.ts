@@ -10,7 +10,8 @@ type FilterExpressionType =
   | 'literal'
   | 'unary'
   | 'collection'
-  | 'alias';
+  | 'alias'
+  | 'lambda';
 
 interface FilterExpression {
   type: FilterExpressionType;
@@ -24,6 +25,9 @@ interface FilterExpression {
   args?: FilterExpression[];
   values?: FilterExpression[];
   name?: string;
+  collection?: string;
+  variable?: string;
+  predicate?: FilterExpression;
 }
 
 interface EvaluationContext {
@@ -64,6 +68,11 @@ function parseFilterExpression(filter: string): FilterExpression {
       operator: 'not',
       operand: parseFilterExpression(filter.slice(4).trim())
     };
+  }
+  
+  const lambdaExpression = parseLambdaExpression(filter);
+  if (lambdaExpression) {
+    return lambdaExpression;
   }
 
   const hasParts = splitByOperator(filter, ' has ');
@@ -227,10 +236,26 @@ function splitCollectionValues(str: string): string[] {
   return values;
 }
 
+function parseLambdaExpression(filter: string): FilterExpression | null {
+  const match = filter.match(/^([\w/]+)\/(any|all)\((\w+):(.*)\)$/);
+  if (!match) {
+    return null;
+  }
+
+  const [, collectionPath, operator, variable, body] = match;
+  return {
+    type: 'lambda',
+    operator,
+    collection: collectionPath,
+    variable,
+    predicate: parseFilterExpression(body.trim()),
+  };
+}
+
 function evaluateExpression(expr: FilterExpression, entity: any, context: EvaluationContext): any {
   switch (expr.type) {
     case 'property':
-      return getPropertyValue(entity, expr.property!);
+      return getPropertyValue(entity, expr.property!, context);
     
     case 'literal':
       return expr.value;
@@ -259,23 +284,35 @@ function evaluateExpression(expr: FilterExpression, entity: any, context: Evalua
     case 'alias':
       return resolveAlias(expr.name!, entity, context);
 
+    case 'lambda':
+      return evaluateLambdaExpression(expr, entity, context);
+
     default:
       return false;
   }
 }
 
-function getPropertyValue(entity: any, property: string): any {
+function getPropertyValue(entity: any, property: string, context: EvaluationContext): any {
   // Handle nested properties (e.g., "address/city")
   const parts = property.split('/');
-  let value = entity;
+  let current: any;
+
+  if (parts.length > 0 && Object.prototype.hasOwnProperty.call(context.scope, parts[0])) {
+    current = context.scope[parts[0]];
+    parts.shift();
+  } else {
+    current = entity;
+  }
+
   for (const part of parts) {
-    if (value && typeof value === 'object') {
-      value = value[part];
+    if (current && typeof current === 'object') {
+      current = current[part];
     } else {
       return undefined;
     }
   }
-  return value;
+
+  return current;
 }
 
 function evaluateComparison(left: any, operator: string, right: any): boolean {
@@ -356,6 +393,65 @@ function resolveAlias(aliasName: string, entity: any, context: EvaluationContext
   } finally {
     context.resolvingAliases.delete(aliasName);
   }
+}
+
+function evaluateLambdaExpression(
+  expr: FilterExpression,
+  entity: any,
+  context: EvaluationContext
+): boolean {
+  if (!expr.collection || !expr.operator || !expr.predicate || !expr.variable) {
+    return false;
+  }
+
+  const collectionValue = getPropertyValue(entity, expr.collection, context);
+  const items = normalizeCollection(collectionValue);
+
+  if (!items) {
+    return expr.operator === 'all';
+  }
+
+  if (expr.operator === 'any') {
+    return items.some(item => evaluateLambdaPredicate(expr.predicate!, expr.variable!, item, entity, context));
+  }
+
+  if (expr.operator === 'all') {
+    return items.every(item => evaluateLambdaPredicate(expr.predicate!, expr.variable!, item, entity, context));
+  }
+
+  return false;
+}
+
+function evaluateLambdaPredicate(
+  predicate: FilterExpression,
+  variable: string,
+  item: unknown,
+  entity: any,
+  context: EvaluationContext
+): boolean {
+  const hadPrevious = Object.prototype.hasOwnProperty.call(context.scope, variable);
+  const previousValue = context.scope[variable];
+
+  context.scope[variable] = item as Record<string, unknown>;
+  try {
+    return Boolean(evaluateExpression(predicate, entity, context));
+  } finally {
+    if (hadPrevious) {
+      context.scope[variable] = previousValue;
+    } else {
+      delete context.scope[variable];
+    }
+  }
+}
+
+function normalizeCollection(value: unknown): unknown[] | null {
+  if (Array.isArray(value)) {
+    return value;
+  }
+  if (value instanceof Set) {
+    return Array.from(value);
+  }
+  return null;
 }
 
 function evaluateFunction(

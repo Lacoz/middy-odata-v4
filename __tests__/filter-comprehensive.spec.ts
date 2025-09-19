@@ -129,6 +129,16 @@ describe("$filter - practical coverage", () => {
       expect(aliased.map(p => p.name)).toEqual(["A", "C"]);
     });
 
+    it("evaluates lambda any expressions", () => {
+      const anyAdmin = filterArray(USERS, { filter: "tags/any(tag: tag eq 'admin')" });
+      expect(anyAdmin.map(u => u.name)).toEqual(["John Doe"]);
+    });
+
+    it("evaluates lambda all expressions", () => {
+      const allNonAdmin = filterArray(USERS, { filter: "tags/all(tag: tag ne 'admin')" });
+      expect(allNonAdmin.map(u => u.name)).toEqual(["Jane Smith"]);
+    });
+
     it("ignores unknown functions", () => {
       const unsupportedFunction = filterArray(PRODUCTS, { filter: "invalidFunction(price)" });
       expect(unsupportedFunction).toEqual([]);
