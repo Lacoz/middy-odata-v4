@@ -108,10 +108,25 @@ describe("$filter - practical coverage", () => {
     });
   });
 
-  describe("unsupported expressions fall back to original data", () => {
-    it("returns an empty result when an unsupported operator is used", () => {
-      const unsupported = filterArray(USERS, { filter: "tags has 'admin'" });
-      expect(unsupported).toEqual([]);
+  describe("collection operators, aliases and unknowns", () => {
+    it("supports collection membership via has operator", () => {
+      const admins = filterArray(USERS, { filter: "tags has 'admin'" });
+      expect(admins.map(u => u.name)).toEqual(["John Doe"]);
+    });
+
+    it("filters using the in operator", () => {
+      const activeOrPending = filterArray(PRODUCTS, { filter: "status in ('Active','Pending')" });
+      expect(activeOrPending.map(p => p.name)).toEqual(["A", "C"]);
+    });
+
+    it("resolves parameter aliases when evaluating filters", () => {
+      const aliased = filterArray(PRODUCTS, {
+        filter: "status eq @target",
+        parameterAliases: {
+          "@target": "'Active'",
+        },
+      });
+      expect(aliased.map(p => p.name)).toEqual(["A", "C"]);
     });
 
     it("ignores unknown functions", () => {

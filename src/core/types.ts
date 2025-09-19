@@ -116,6 +116,7 @@ export interface ODataQueryOptions {
   search?: string;
   compute?: string[];
   apply?: string;
+  parameterAliases?: Record<string, string>;
 }
 
 export interface ODataRequestContext {

@@ -23,5 +23,16 @@ export function parseODataQuery(query: Record<string, string | undefined>): ODat
   if (expand) {
     opts.expand = expand.split(",").map((e) => ({ path: e.trim() }));
   }
+
+  const parameterAliases: Record<string, string> = {};
+  for (const [key, value] of Object.entries(query)) {
+    if (key.startsWith("@") && typeof value === "string") {
+      parameterAliases[key] = value;
+    }
+  }
+
+  if (Object.keys(parameterAliases).length > 0) {
+    opts.parameterAliases = parameterAliases;
+  }
   return opts;
 }

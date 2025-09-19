@@ -2,8 +2,18 @@
 import type { ODataEntity, ODataQueryOptions } from "./types";
 
 // Simple filter expression parser and evaluator
+type FilterExpressionType =
+  | 'comparison'
+  | 'logical'
+  | 'function'
+  | 'property'
+  | 'literal'
+  | 'unary'
+  | 'collection'
+  | 'alias';
+
 interface FilterExpression {
-  type: 'comparison' | 'logical' | 'function' | 'property' | 'literal' | 'unary';
+  type: FilterExpressionType;
   operator?: string;
   left?: FilterExpression;
   right?: FilterExpression;
@@ -12,9 +22,18 @@ interface FilterExpression {
   value?: any;
   function?: string;
   args?: FilterExpression[];
+  values?: FilterExpression[];
+  name?: string;
+}
+
+interface EvaluationContext {
+  scope: Record<string, unknown>;
+  aliases: Record<string, FilterExpression>;
+  resolvingAliases: Set<string>;
 }
 
 function parseFilterExpression(filter: string): FilterExpression {
+  filter = filter.trim();
   // Simple parser for basic filter expressions
   // This is a simplified implementation - a full OData parser would be much more complex
   
@@ -46,7 +65,32 @@ function parseFilterExpression(filter: string): FilterExpression {
       operand: parseFilterExpression(filter.slice(4).trim())
     };
   }
-  
+
+  const hasParts = splitByOperator(filter, ' has ');
+  if (hasParts.length === 2) {
+    return {
+      type: 'collection',
+      operator: 'has',
+      left: parseFilterExpression(hasParts[0].trim()),
+      right: parseFilterExpression(hasParts[1].trim()),
+    };
+  }
+
+  const inParts = splitByOperator(filter, ' in ');
+  if (inParts.length === 2) {
+    const right = inParts[1].trim();
+    if (right.startsWith('(') && right.endsWith(')')) {
+      const inner = right.slice(1, -1);
+      const valueStrings = splitCollectionValues(inner);
+      return {
+        type: 'collection',
+        operator: 'in',
+        left: parseFilterExpression(inParts[0].trim()),
+        values: valueStrings.map(value => parseFilterExpression(value.trim())),
+      };
+    }
+  }
+
   // Handle comparison operators
   const comparisonOps = [' eq ', ' ne ', ' gt ', ' ge ', ' lt ', ' le '];
   for (const op of comparisonOps) {
@@ -113,6 +157,13 @@ function parseFilterExpression(filter: string): FilterExpression {
     };
   }
   
+  if (filter.startsWith('@')) {
+    return {
+      type: 'alias',
+      name: filter,
+    };
+  }
+
   // Handle properties
   return {
     type: 'property',
@@ -140,7 +191,43 @@ function splitByOperator(str: string, operator: string): string[] {
   return [str];
 }
 
-function evaluateExpression(expr: FilterExpression, entity: any): any {
+function splitCollectionValues(str: string): string[] {
+  const values: string[] = [];
+  let current = '';
+  let depth = 0;
+  let inQuotes = false;
+
+  const pushValue = () => {
+    const trimmed = current.trim();
+    if (trimmed.length > 0) {
+      values.push(trimmed);
+    }
+    current = '';
+  };
+
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i];
+    if (char === "'") {
+      inQuotes = !inQuotes;
+    }
+
+    if (!inQuotes) {
+      if (char === '(') depth++;
+      if (char === ')') depth = Math.max(0, depth - 1);
+      if (char === ',' && depth === 0) {
+        pushValue();
+        continue;
+      }
+    }
+
+    current += char;
+  }
+
+  pushValue();
+  return values;
+}
+
+function evaluateExpression(expr: FilterExpression, entity: any, context: EvaluationContext): any {
   switch (expr.type) {
     case 'property':
       return getPropertyValue(entity, expr.property!);
@@ -149,22 +236,28 @@ function evaluateExpression(expr: FilterExpression, entity: any): any {
       return expr.value;
     
     case 'comparison': {
-      const left = evaluateExpression(expr.left!, entity);
-      const right = evaluateExpression(expr.right!, entity);
+      const left = evaluateExpression(expr.left!, entity, context);
+      const right = evaluateExpression(expr.right!, entity, context);
       return evaluateComparison(left, expr.operator!, right);
     }
     
     case 'logical': {
-      const leftResult = evaluateExpression(expr.left!, entity);
-      const rightResult = evaluateExpression(expr.right!, entity);
+      const leftResult = Boolean(evaluateExpression(expr.left!, entity, context));
+      const rightResult = Boolean(evaluateExpression(expr.right!, entity, context));
       return evaluateLogical(leftResult, expr.operator!, rightResult);
     }
 
     case 'unary':
-      return evaluateUnary(expr.operator!, evaluateExpression(expr.operand!, entity));
+      return evaluateUnary(expr.operator!, Boolean(evaluateExpression(expr.operand!, entity, context)));
 
     case 'function':
-      return evaluateFunction(expr.function!, expr.args!, entity);
+      return evaluateFunction(expr.function!, expr.args!, entity, context);
+
+    case 'collection':
+      return evaluateCollectionExpression(expr, entity, context);
+
+    case 'alias':
+      return resolveAlias(expr.name!, entity, context);
 
     default:
       return false;
@@ -214,8 +307,64 @@ function evaluateUnary(operator: string, operand: boolean): boolean {
   }
 }
 
-function evaluateFunction(funcName: string, args: FilterExpression[], entity: any): any {
-  const argValues = args.map(arg => evaluateExpression(arg, entity));
+function evaluateCollectionExpression(
+  expr: FilterExpression,
+  entity: any,
+  context: EvaluationContext
+): boolean {
+  if (expr.operator === 'has') {
+    const collection = evaluateExpression(expr.left!, entity, context);
+    const candidate = evaluateExpression(expr.right!, entity, context);
+
+    if (Array.isArray(collection)) {
+      return collection.some((item) => item === candidate);
+    }
+
+    if (collection instanceof Set) {
+      return collection.has(candidate);
+    }
+
+    if (typeof collection === 'string') {
+      return typeof candidate === 'string' && collection.split(',').map(s => s.trim()).includes(candidate);
+    }
+
+    return false;
+  }
+
+  if (expr.operator === 'in') {
+    const target = evaluateExpression(expr.left!, entity, context);
+    const candidates = expr.values?.map(value => evaluateExpression(value, entity, context)) ?? [];
+    return candidates.some(value => value === target);
+  }
+
+  return false;
+}
+
+function resolveAlias(aliasName: string, entity: any, context: EvaluationContext): unknown {
+  const aliasExpression = context.aliases[aliasName];
+  if (!aliasExpression) {
+    return undefined;
+  }
+
+  if (context.resolvingAliases.has(aliasName)) {
+    throw new Error(`Circular parameter alias reference detected for ${aliasName}`);
+  }
+
+  context.resolvingAliases.add(aliasName);
+  try {
+    return evaluateExpression(aliasExpression, entity, context);
+  } finally {
+    context.resolvingAliases.delete(aliasName);
+  }
+}
+
+function evaluateFunction(
+  funcName: string,
+  args: FilterExpression[],
+  entity: any,
+  context: EvaluationContext
+): any {
+  const argValues = args.map(arg => evaluateExpression(arg, entity, context));
   
   switch (funcName) {
     case 'contains':
@@ -369,12 +518,41 @@ export function filterArray<T extends ODataEntity>(rows: T[], options: ODataQuer
   
   try {
     const expression = parseFilterExpression(options.filter);
-    return rows.filter(row => evaluateExpression(expression, row));
+    const aliasExpressions = buildAliasExpressions(options.parameterAliases);
+    return rows.filter(row => {
+      const context = createEvaluationContext(aliasExpressions);
+      return Boolean(evaluateExpression(expression, row, context));
+    });
   } catch (error) {
     // If filter parsing fails, return all rows
     console.warn('Filter parsing failed:', error);
     return rows;
   }
+}
+
+function createEvaluationContext(aliases: Record<string, FilterExpression>): EvaluationContext {
+  return {
+    scope: {},
+    aliases,
+    resolvingAliases: new Set<string>(),
+  };
+}
+
+function buildAliasExpressions(parameterAliases: ODataQueryOptions['parameterAliases']): Record<string, FilterExpression> {
+  const expressions: Record<string, FilterExpression> = {};
+  if (!parameterAliases) {
+    return expressions;
+  }
+
+  for (const [alias, rawValue] of Object.entries(parameterAliases)) {
+    try {
+      expressions[alias] = parseFilterExpression(rawValue.trim());
+    } catch (error) {
+      console.warn(`Failed to parse parameter alias ${alias}:`, error);
+    }
+  }
+
+  return expressions;
 }
 
 export function orderArray<T extends ODataEntity>(rows: T[], options: ODataQueryOptions): T[] {
