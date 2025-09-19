@@ -386,7 +386,7 @@ function isValueInRange(value: unknown, min: number, max: number): boolean {
 }
 
 function levenshteinDistance(a: string, b: string): number {
-  const matrix: number[][] = Array.from({ length: a.length + 1 }, (_, i) => Array(b.length + 1).fill(0));
+  const matrix: number[][] = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
 
   for (let i = 0; i <= a.length; i++) {
     matrix[i][0] = i;
@@ -1040,12 +1040,15 @@ function calculateAggregateValues<T extends ODataEntity>(rows: T[], definitions:
 
 function parseOrderByTerms(expression: string): { property: string; direction: 'asc' | 'desc' }[] {
   if (!expression) return [];
-  return expression.split(',').map(term => {
-    const parts = term.trim().split(/\s+/);
-    const property = parts[0];
-    const direction = (parts[1]?.toLowerCase() === 'desc') ? 'desc' : 'asc';
-    return { property, direction };
-  }).filter(term => term.property);
+  return expression
+    .split(',')
+    .map(term => {
+      const parts = term.trim().split(/\s+/);
+      const property = parts[0];
+      const direction: 'asc' | 'desc' = parts[1]?.toLowerCase() === 'desc' ? 'desc' : 'asc';
+      return property ? { property, direction } : null;
+    })
+    .filter((term): term is { property: string; direction: 'asc' | 'desc' } => term !== null);
 }
 
 function compareByOrderTerms(a: Record<string, unknown>, b: Record<string, unknown>, orderby: { property: string; direction: 'asc' | 'desc' }[]): number {
