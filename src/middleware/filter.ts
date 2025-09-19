@@ -1,6 +1,7 @@
 import type { MiddlewareObj } from "@middy/core";
 import type { ODataFilterOptions, ODataMiddlewareContext } from "./types";
 import { filterArray, orderArray } from "../core/filter-order";
+import { searchData, computeData, applyData } from "../core/search-compute-apply";
 import { mergeMiddlewareOptions, getMiddlewareContext, setMiddlewareContext } from "./compose";
 
 declare const console: any;
@@ -10,6 +11,9 @@ const DEFAULT_FILTER_OPTIONS: ODataFilterOptions = {
   enableOrderby: true,
   maxFilterDepth: 10,
   caseSensitive: true,
+  enableSearch: false,
+  enableCompute: false,
+  enableApply: false,
 };
 
 /**
@@ -127,6 +131,15 @@ async function filterAndOrderCollection(
 ): Promise<unknown[]> {
   let filteredEntities = [...entities];
 
+  // Apply $search if present and enabled
+  if (queryOptions.search && options.enableSearch) {
+    try {
+      filteredEntities = searchData(filteredEntities as any[], { search: queryOptions.search });
+    } catch (error) {
+      console.error('[OData Filter] Error applying search:', error);
+    }
+  }
+
   // Apply $filter if present and enabled
   if (queryOptions.filter && options.enableFilter) {
     try {
@@ -134,6 +147,29 @@ async function filterAndOrderCollection(
     } catch (error) {
       console.error('[OData Filter] Error applying filter:', error);
       // Continue with unfiltered data
+    }
+  }
+
+  // Apply $compute if present and enabled
+  if (queryOptions.compute && options.enableCompute) {
+    try {
+      filteredEntities = computeData(filteredEntities as any[], {
+        compute: queryOptions.compute,
+      }) as unknown[];
+    } catch (error) {
+      console.error('[OData Filter] Error applying compute:', error);
+    }
+  }
+
+  // Apply $apply if present and enabled
+  if (queryOptions.apply && options.enableApply) {
+    try {
+      const applied = applyData(filteredEntities as any[], {
+        apply: queryOptions.apply,
+      });
+      filteredEntities = Array.isArray(applied) ? applied : filteredEntities;
+    } catch (error) {
+      console.error('[OData Filter] Error applying apply transformation:', error);
     }
   }
 
@@ -204,5 +240,3 @@ function getCollectionOptionsForProperty(propertyName: string, queryOptions: any
 
   return null;
 }
-
-

@@ -4,6 +4,8 @@ import { EDM_MODEL } from "./fixtures/edm";
 import { PRODUCTS } from "./fixtures/data";
 import { odataPagination } from "../src/middleware/pagination";
 import { odataSerialize } from "../src/middleware/serialize";
+import { odataParse } from "../src/middleware/parse";
+import { odataFilter } from "../src/middleware/filter";
 
 describe("Middy integration and behavior", () => {
   describe("Middleware setup", () => {
@@ -204,6 +206,42 @@ describe("Middy integration and behavior", () => {
 
       const payload = JSON.parse(request.response.body);
       expect(payload.value).toHaveLength(PRODUCTS.length);
+    });
+
+    it("applies $search, $compute, and $apply when enabled", async () => {
+      const parseMiddleware = odataParse({
+        model: EDM_MODEL,
+        serviceRoot: "https://api.example.com/odata",
+      });
+
+      const filterMiddleware = odataFilter({
+        enableSearch: true,
+        enableCompute: true,
+        enableApply: true,
+      });
+
+      const request: any = {
+        event: {
+          rawQueryString: "$search=name:A&$compute=price%20%2B%201&$apply=filter(price%20gt%2010)",
+        },
+        internal: {},
+        response: { body: JSON.stringify({ value: PRODUCTS }) },
+      };
+
+      await parseMiddleware.before!(request);
+      expect((request.internal as any).odata.options.search).toBe("name:A");
+      expect((request.internal as any).odata.options.compute).toEqual(["price + 1"]);
+      expect(Array.isArray((request.internal as any).odata.options.apply)
+        ? (request.internal as any).odata.options.apply
+        : [(request.internal as any).odata.options.apply]).toEqual([
+        "filter(price gt 10)",
+      ]);
+      await filterMiddleware.after!(request);
+
+      const payload = JSON.parse(request.response.body);
+      expect(Array.isArray(payload.value)).toBe(true);
+      expect(payload.value).toHaveLength(1);
+      expect(payload.value[0]).toHaveProperty("price_plus_1", 11.5);
     });
 
     it("should respect context timeouts", async () => {

@@ -47,6 +47,9 @@ export interface ODataFilterOptions {
   enableOrderby?: boolean;
   maxFilterDepth?: number;
   caseSensitive?: boolean;
+  enableSearch?: boolean;
+  enableCompute?: boolean;
+  enableApply?: boolean;
   [key: string]: unknown;
 }
 

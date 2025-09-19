@@ -114,8 +114,8 @@ export interface ODataQueryOptions {
   skip?: number;
   count?: boolean;
   search?: string;
-  compute?: string[];
-  apply?: string;
+  compute?: string | string[];
+  apply?: string | string[];
   parameterAliases?: Record<string, string>;
 }
 

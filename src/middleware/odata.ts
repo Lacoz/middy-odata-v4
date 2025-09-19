@@ -160,6 +160,9 @@ export function odata(options: ODataOptions): MiddlewareObj {
       enableOrderby: opts.filter?.enableOrderby ?? true,
       maxFilterDepth: opts.filter?.maxFilterDepth ?? opts.defaults?.maxFilterDepth ?? 10,
       caseSensitive: opts.filter?.caseSensitive ?? true,
+      enableSearch: opts.filter?.enableSearch ?? opts.enable?.search ?? false,
+      enableCompute: opts.filter?.enableCompute ?? opts.enable?.compute ?? false,
+      enableApply: opts.filter?.enableApply ?? opts.enable?.apply ?? false,
     }));
   }
 

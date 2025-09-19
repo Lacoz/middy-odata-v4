@@ -24,37 +24,32 @@ This document identifies missing OData v4.01 features and test coverage gaps in 
 ## 1. **Advanced Query Options**
 
 ### 1.1 `$search` (Full-Text Search)
-- **Status**: ❌ **NOT IMPLEMENTED** (tests are skipped)
-- **Missing Features**:
-  - Full-text search across string properties
-  - Search with multiple terms and boolean operators (AND, OR, NOT)
-  - Quoted phrase search
-  - Wildcard search (*, ?)
-  - Search with parentheses for grouping
-  - Search scoring and ranking
-  - Search within specific properties
-  - Search with language-specific analyzers
+- **Status**: ⚠️ **PARTIALLY IMPLEMENTED**
+- **Shipped Features**:
+  - Boolean operators (AND/OR/NOT), parentheses, field-scoped queries, quoted phrases, wildcards, numeric ranges, and basic fuzzy matching
+  - Integration with middleware via `enable.search` (disabled by default)
+- **Remaining Work**:
+  - Relevance scoring/ordering and boosting strategies
+  - Language-specific analyzers and stemming
+  - Hit highlighting and analyzer configuration per property
 
 ### 1.2 `$compute` (Computed Properties)
-- **Status**: ❌ **NOT IMPLEMENTED** (tests are skipped)
-- **Missing Features**:
-  - Dynamic property computation
-  - Mathematical expressions in computed properties
-  - String manipulation functions
-  - Date/time calculations
-  - Aggregation functions in computed properties
-  - Nested computed properties
+- **Status**: ⚠️ **PARTIALLY IMPLEMENTED**
+- **Shipped Features**:
+  - Arithmetic, string, and date helpers with alias-safe projections and nested property access
+  - Validation for malformed expressions and unsupported functions
+- **Remaining Work**:
+  - Type conversion helpers (`cast`, `isof`) and numeric functions (`abs`, `sqrt`, `power`, `mod`)
+  - Complex/nested compute chains with model-aware validation
 
 ### 1.3 `$apply` (Aggregation and Grouping)
-- **Status**: ❌ **NOT IMPLEMENTED** (tests are skipped)
-- **Missing Features**:
-  - `$aggregate` transformations
-  - `$groupby` operations
-  - `$filter` within apply
-  - `$orderby` within apply
-  - `$top` and `$skip` within apply
-  - Nested aggregation operations
-  - Custom aggregation functions
+- **Status**: ⚠️ **PARTIALLY IMPLEMENTED**
+- **Shipped Features**:
+  - Sequential transformations (`filter`, `orderby`, `top`, `skip`, `count`, `aggregate`, `compute`, `expand`, `select`)
+  - `groupby` pipelines with `aggregate`, `having`, `orderby`, paging helpers, and nested transformations
+- **Remaining Work**:
+  - Full pipeline parsing for slash-delimited expressions and custom aggregations
+  - Performance optimisations for large group sets and streaming scenarios
 
 ## 2. **Advanced Filter Operations**
 
@@ -298,7 +293,7 @@ This document identifies missing OData v4.01 features and test coverage gaps in 
 ### **High Priority (Core OData Features)**
 1. ✅ **Navigation resolvers for $expand** — async data providers wired into routing middleware with nested option support and timeout awareness (2025-09-19)
 2. ✅ **Complete $filter parity (phase 1)** — collection operators (`has`, `in`), lambda (`any`, `all`), parameter aliases, and core date/string/math helpers implemented
-3. ⏳ **Production-ready advanced options** — deliver usable `$search`, `$compute`, and `$apply` pipelines (scoring, computed aliases, aggregations) instead of the current placeholder logic.
+3. ⚠️ **Production-ready advanced options** — baseline `$search`, `$compute`, and `$apply` pipelines shipped; follow-up on scoring, analyzer configuration, and large-scale aggregation performance tuning.
 4. ✅ **Routing middleware data provisioning** — consistent entity-set loading pipeline exposed via middleware context (2025-09-19)
 
 ### **Medium Priority (Advanced Features)**

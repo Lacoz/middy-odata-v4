@@ -40,14 +40,16 @@ Covers decoding and validation of query options from API Gateway events.
   - Coerces to integers, validates ranges (non-negative)
 - $count
   - Parses boolean true/false
-- $search (ignored by default)
-  - Accepted but returns validation error unless explicitly enabled
+- $search (disabled by default)
+  - When enabled, supports boolean operators (AND/OR/NOT), field-scoped terms, quoted phrases, wildcards, and numeric ranges
+  - Returns validation errors for malformed Lucene syntax or unsupported features
 - $format (ignored by default)
   - Accepted values: json (default); non-json rejected
 - $compute (optional)
-  - Rejected unless enabled; validates computed aliases
+  - When enabled, evaluates arithmetic, string, and date helper expressions and emits alias-safe property names
+  - Guards against unsupported functions and malformed expressions
 - $apply (aggregation)
-  - Rejected unless explicitly enabled
+  - When enabled, supports filter/orderby/top/skip/count/aggregate/compute/expand/select transformations and groupby pipelines
 
 Expected outcome: structured `odata` object attached to request context, or a 400 error with an OData error payload.
 
@@ -105,7 +107,7 @@ For errors:
 
 ### 7) Configuration toggles
 
-- Enable/disable advanced options: $compute, $apply, $search
+- Enable/disable advanced options via `enable.search`, `enable.compute`, and `enable.apply` (and corresponding `odataFilter` toggles)
 - Max page size; default top; hard limit for top
 - Case sensitivity toggle for property names (default case-sensitive per model)
 - Custom `@odata.context` base URL resolver
@@ -150,6 +152,9 @@ const handler = middy(baseHandler)
       functions: true,
       metadata: true,
       conformance: true,
+      search: true,
+      compute: true,
+      apply: true,
     },
     defaults: {
       maxTop: 1000,
