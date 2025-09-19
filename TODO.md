@@ -28,8 +28,9 @@ This document identifies missing OData v4.01 features and test coverage gaps in 
 - **Shipped Features**:
   - Boolean operators (AND/OR/NOT), parentheses, field-scoped queries, quoted phrases, wildcards, numeric ranges, and basic fuzzy matching
   - Integration with middleware via `enable.search` (disabled by default)
+  - Baseline relevance scoring with `@search.score` annotations and deterministic ordering
 - **Remaining Work**:
-  - Relevance scoring/ordering and boosting strategies
+  - Advanced boosting strategies, tf/idf-style weighting, and configurable scoring profiles
   - Language-specific analyzers and stemming
   - Hit highlighting and analyzer configuration per property
 

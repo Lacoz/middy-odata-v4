@@ -80,6 +80,21 @@ describe("$search, $compute, $apply - Advanced OData v4.01 Features", () => {
       expect(result).toHaveLength(2);
     });
 
+    it("should annotate results with @search.score and order by relevance", () => {
+      const items = [
+        { id: 1, name: "Alpha Beta" },
+        { id: 2, name: "Alpha" },
+        { id: 3, name: "Gamma" },
+      ];
+
+      const result = searchData(items, { search: '"Alpha Beta" OR Alpha' });
+      expect(result).toHaveLength(2);
+      expect(result[0]).toHaveProperty("@search.score");
+      expect(result[1]).toHaveProperty("@search.score");
+      expect(result[0]["@search.score"]).toBeGreaterThan(result[1]["@search.score"]);
+      expect(result.map(item => item.id)).toEqual([1, 2]);
+    });
+
     describe("Error Handling", () => {
       it("should handle invalid search syntax", () => {
         expect(() => searchData(PRODUCTS, { search: "invalid syntax [" }))

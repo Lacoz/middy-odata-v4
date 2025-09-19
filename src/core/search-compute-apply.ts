@@ -20,6 +20,11 @@ interface TermSpec {
   hasWildcard: boolean;
 }
 
+interface SearchEvaluation {
+  matched: boolean;
+  score: number;
+}
+
 // Enhanced search implementation covering the feature set exercised by the tests
 export function searchData<T extends ODataEntity>(rows: T[], options: ODataQueryOptions): T[] {
   const rawSearch = options.search?.trim();
@@ -39,7 +44,30 @@ export function searchData<T extends ODataEntity>(rows: T[], options: ODataQuery
   const expression = parseSearchExpression(tokens);
   if (!expression) return rows;
 
-  return rows.filter(row => evaluateSearchExpression(expression, row));
+  const evaluated = rows.map((row, index) => {
+    const evaluation = evaluateSearchExpression(expression, row);
+    return { row, evaluation, index };
+  }).filter(item => item.evaluation.matched);
+
+  evaluated.sort((a, b) => {
+    if (b.evaluation.score === a.evaluation.score) {
+      return a.index - b.index;
+    }
+    return b.evaluation.score - a.evaluation.score;
+  });
+
+  return evaluated.map(({ row, evaluation }) => {
+    if (evaluation.score <= 0) {
+      return row;
+    }
+    const score = Number(evaluation.score.toFixed(4));
+    if ((row as Record<string, unknown>)["@search.score"] === score) {
+      return row;
+    }
+    const annotated = { ...(row as Record<string, unknown>) };
+    annotated["@search.score"] = score;
+    return annotated as T;
+  });
 }
 
 function tokenizeSearch(input: string): SearchToken[] {
@@ -181,43 +209,61 @@ function parseSearchExpression(tokens: SearchToken[]): SearchNode | null {
   return expression;
 }
 
-function evaluateSearchExpression<T extends ODataEntity>(node: SearchNode, entity: T): boolean {
+function evaluateSearchExpression<T extends ODataEntity>(node: SearchNode, entity: T): SearchEvaluation {
   switch (node.type) {
     case 'term':
       return matchSearchTerm(entity, node.value);
-    case 'and':
-      return evaluateSearchExpression(node.left, entity) && evaluateSearchExpression(node.right, entity);
-    case 'or':
-      return evaluateSearchExpression(node.left, entity) || evaluateSearchExpression(node.right, entity);
-    case 'not':
-      return !evaluateSearchExpression(node.node, entity);
+    case 'and': {
+      const leftAnd = evaluateSearchExpression(node.left, entity);
+      const rightAnd = evaluateSearchExpression(node.right, entity);
+      return {
+        matched: leftAnd.matched && rightAnd.matched,
+        score: (leftAnd.matched && rightAnd.matched) ? leftAnd.score + rightAnd.score : 0,
+      };
+    }
+    case 'or': {
+      const leftOr = evaluateSearchExpression(node.left, entity);
+      const rightOr = evaluateSearchExpression(node.right, entity);
+      return {
+        matched: leftOr.matched || rightOr.matched,
+        score: leftOr.score + rightOr.score,
+      };
+    }
+    case 'not': {
+      const inner = evaluateSearchExpression(node.node, entity);
+      return {
+        matched: !inner.matched,
+        score: !inner.matched ? 0.5 : 0,
+      };
+    }
     default:
-      return false;
+      return { matched: false, score: 0 };
   }
 }
 
-function matchSearchTerm(entity: ODataEntity, rawTerm: string): boolean {
+function matchSearchTerm(entity: ODataEntity, rawTerm: string): SearchEvaluation {
   const term = rawTerm.trim();
-  if (!term) return false;
+  if (!term) return { matched: false, score: 0 };
 
   const colonIndex = term.indexOf(':');
   if (colonIndex > -1) {
     const field = term.slice(0, colonIndex).trim();
     const value = term.slice(colonIndex + 1);
-    if (!field) return false;
+    if (!field) return { matched: false, score: 0 };
     return matchFieldTerm(entity, field, value);
   }
 
   const spec = analyseTerm(term);
-  if (!spec) return false;
+  if (!spec) return { matched: false, score: 0 };
 
-  return matchesSpec(spec, entity, true);
+  const score = matchesSpec(spec, entity, true);
+  return { matched: score > 0, score };
 }
 
-function matchFieldTerm(entity: ODataEntity, fieldPath: string, rawValue: string): boolean {
+function matchFieldTerm(entity: ODataEntity, fieldPath: string, rawValue: string): SearchEvaluation {
   const candidate = getNestedValue(entity, fieldPath);
   if (candidate === undefined) {
-    return false;
+    return { matched: false, score: 0 };
   }
 
   const trimmed = rawValue.trim();
@@ -226,19 +272,23 @@ function matchFieldTerm(entity: ODataEntity, fieldPath: string, rawValue: string
     const min = Number(rangeMatch[1]);
     const max = Number(rangeMatch[2]);
     if (Number.isNaN(min) || Number.isNaN(max)) {
-      return false;
+      return { matched: false, score: 0 };
     }
 
+    let score = 0;
     if (Array.isArray(candidate)) {
-      return candidate.some(value => isValueInRange(value, min, max));
+      score = candidate.reduce((acc, value) => acc + (isValueInRange(value, min, max) ? 1 : 0), 0);
+    } else if (isValueInRange(candidate, min, max)) {
+      score = 1;
     }
-    return isValueInRange(candidate, min, max);
+    return { matched: score > 0, score };
   }
 
   const spec = analyseTerm(trimmed);
-  if (!spec) return false;
+  if (!spec) return { matched: false, score: 0 };
 
-  return matchesSpec(spec, candidate, false, fieldPath);
+  const score = matchesSpec(spec, candidate, false, fieldPath);
+  return { matched: score > 0, score };
 }
 
 function analyseTerm(raw: string): TermSpec | null {
@@ -276,35 +326,59 @@ function analyseTerm(raw: string): TermSpec | null {
   };
 }
 
-function matchesSpec(spec: TermSpec, value: unknown, restrictToSearchable = false, path?: string): boolean {
+function matchesSpec(spec: TermSpec, value: unknown, restrictToSearchable = false, path?: string): number {
   const candidates = collectCandidateStrings(value, restrictToSearchable, path);
-  if (candidates.length === 0) return false;
+  if (candidates.length === 0) return 0;
 
-  if (spec.hasWildcard) {
-    const regex = wildcardToRegex(spec.normalized);
-    return candidates.some(candidate => regex.test(candidate.toLowerCase()));
-  }
+  let totalScore = 0;
+  for (const candidate of candidates) {
+    const lowerCandidate = candidate.toLowerCase();
 
-  if (spec.isPhrase) {
-    return candidates.some(candidate => candidate.toLowerCase().includes(spec.normalized));
-  }
+    if (spec.hasWildcard) {
+      const regex = wildcardToRegex(spec.normalized);
+      if (regex.test(lowerCandidate)) {
+        totalScore += computeTermWeight(spec, path);
+      }
+      continue;
+    }
 
-  if (spec.isFuzzy) {
-    return candidates.some(candidate => {
-      const lowerCandidate = candidate.toLowerCase();
+    if (spec.isPhrase) {
       if (lowerCandidate.includes(spec.normalized)) {
-        return true;
+        totalScore += computeTermWeight(spec, path) + 1;
+      }
+      continue;
+    }
+
+    if (spec.isFuzzy) {
+      if (lowerCandidate.includes(spec.normalized)) {
+        totalScore += computeTermWeight(spec, path);
+        continue;
       }
       if (spec.normalized.length <= 1) {
-        return false;
+        continue;
       }
-      return lowerCandidate
+      const fuzzyMatch = lowerCandidate
         .split(/\s+/)
         .some(word => levenshteinDistance(word, spec.normalized) <= 1);
-    });
+      if (fuzzyMatch) {
+        totalScore += Math.max(computeTermWeight(spec, path) - 0.25, 0.25);
+      }
+      continue;
+    }
+
+    if (lowerCandidate.includes(spec.normalized)) {
+      totalScore += computeTermWeight(spec, path);
+    }
   }
 
-  return candidates.some(candidate => candidate.toLowerCase().includes(spec.normalized));
+  return totalScore;
+}
+
+function computeTermWeight(spec: TermSpec, path?: string): number {
+  let weight = 1;
+  if (spec.hasWildcard) weight += 0.25;
+  if (path) weight += 0.5;
+  return weight;
 }
 
 function wildcardToRegex(term: string): RegExp {
