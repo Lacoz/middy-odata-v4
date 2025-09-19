@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { PRODUCTS, USERS } from "./fixtures/data";
 import { searchData, computeData, applyData } from "../src/core/search-compute-apply";
 
-describe.skip("$search, $compute, $apply - Advanced OData v4.01 Features", () => {
+describe("$search, $compute, $apply - Advanced OData v4.01 Features", () => {
   describe("$search", () => {
     it("should perform full-text search across string properties", () => {
       const result = searchData(PRODUCTS, { search: "A" });
@@ -79,9 +79,21 @@ describe.skip("$search, $compute, $apply - Advanced OData v4.01 Features", () =>
       const result = searchData(PRODUCTS, { search: "A^2 B" });
       expect(result).toHaveLength(2);
     });
+
+    describe("Error Handling", () => {
+      it("should handle invalid search syntax", () => {
+        expect(() => searchData(PRODUCTS, { search: "invalid syntax [" }))
+          .toThrow("Invalid search syntax");
+      });
+
+      it("should handle unsupported search features", () => {
+        expect(() => searchData(PRODUCTS, { search: "unsupported:feature" }))
+          .toThrow("Unsupported search feature");
+      });
+    });
   });
 
-  describe("$compute", () => {
+  describe.skip("$compute", () => {
     it("should compute simple arithmetic expressions", () => {
       const result = computeData(PRODUCTS, { compute: ["price + categoryId"] });
       expect(result[0]).toHaveProperty("price_plus_categoryId");
@@ -145,9 +157,20 @@ describe.skip("$search, $compute, $apply - Advanced OData v4.01 Features", () =>
       expect(result[0]).toHaveProperty("price_plus_0");
       expect((result[0] as any).price_plus_0).toBe(10.5);
     });
+    describe("Error Handling", () => {
+      it("should handle invalid compute expressions", () => {
+        expect(() => computeData(PRODUCTS, { compute: "invalid: invalidFunction()" }))
+          .toThrow("Invalid compute expression");
+      });
+
+      it("should handle unsupported compute functions", () => {
+        expect(() => computeData(PRODUCTS, { compute: "result: unsupportedFunction()" }))
+          .toThrow("Unsupported compute function");
+      });
+    });
   });
 
-  describe("$apply", () => {
+  describe.skip("$apply", () => {
     it("should apply groupby transformation", () => {
       const result = applyData(PRODUCTS, { apply: "groupby" });
       expect(result).toHaveLength(3);
@@ -290,37 +313,16 @@ describe.skip("$search, $compute, $apply - Advanced OData v4.01 Features", () =>
       });
       expect(result[0]).toHaveProperty("discountedTotal");
     });
-  });
+    describe("Error Handling", () => {
+      it("should handle invalid apply transformations", () => {
+        expect(() => applyData(PRODUCTS, { apply: "invalidTransformation()" }))
+          .toThrow("Invalid apply transformation");
+      });
 
-  describe("Error Handling", () => {
-    it("should handle invalid search syntax", () => {
-      expect(() => searchData(PRODUCTS, { search: "invalid syntax [" }))
-        .toThrow("Invalid search syntax");
-    });
-
-    it("should handle invalid compute expressions", () => {
-      expect(() => computeData(PRODUCTS, { compute: "invalid: invalidFunction()" }))
-        .toThrow("Invalid compute expression");
-    });
-
-    it("should handle invalid apply transformations", () => {
-      expect(() => applyData(PRODUCTS, { apply: "invalidTransformation()" }))
-        .toThrow("Invalid apply transformation");
-    });
-
-    it("should handle unsupported search features", () => {
-      expect(() => searchData(PRODUCTS, { search: "unsupported:feature" }))
-        .toThrow("Unsupported search feature");
-    });
-
-    it("should handle unsupported compute functions", () => {
-      expect(() => computeData(PRODUCTS, { compute: "result: unsupportedFunction()" }))
-        .toThrow("Unsupported compute function");
-    });
-
-    it("should handle unsupported apply transformations", () => {
-      expect(() => applyData(PRODUCTS, { apply: "unsupportedTransformation()" }))
-        .toThrow("Unsupported apply transformation");
+      it("should handle unsupported apply transformations", () => {
+        expect(() => applyData(PRODUCTS, { apply: "unsupportedTransformation()" }))
+          .toThrow("Unsupported apply transformation");
+      });
     });
   });
 });
