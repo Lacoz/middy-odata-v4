@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { serializeCollection } from "../src/core/serialize";
+import {
+  serializeCollection,
+  serializeEntityWithContext,
+  buildEntitySetContext,
+  buildSingleEntityContext,
+} from "../src/core/serialize";
 import { PRODUCTS } from "./fixtures/data";
 
 describe("Serialization and response shape", () => {
@@ -76,20 +81,27 @@ describe("Serialization and response shape", () => {
 
   describe("Single entity responses", () => {
     it("should serialize single entity with @odata.context", () => {
-      // TODO: Implement single entity serialization
-      expect(true).toBe(true);
+      const context = "https://api.example.com/odata/$metadata#Products/$entity";
+      const product = PRODUCTS[0];
+      const serialized = serializeEntityWithContext(context, product);
+
+      expect(serialized).toEqual({
+        "@odata.context": context,
+        ...product,
+      });
+      expect(serialized).not.toBe(product);
     });
   });
 
   describe("@odata.context generation", () => {
     it("should generate correct context URL for entity set", () => {
-      // TODO: Implement context URL generation
-      expect(true).toBe(true);
+      const context = buildEntitySetContext("https://api.example.com/odata/", "Products");
+      expect(context).toBe("https://api.example.com/odata/$metadata#Products");
     });
 
     it("should generate correct context URL for single entity", () => {
-      // TODO: Implement single entity context URL
-      expect(true).toBe(true);
+      const context = buildSingleEntityContext("https://api.example.com/odata", "Products(1)");
+      expect(context).toBe("https://api.example.com/odata/$metadata#Products(1)/$entity");
     });
   });
 });
