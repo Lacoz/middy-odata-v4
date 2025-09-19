@@ -1,6 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { EdmModel } from "./types";
 
+function applyAnnotations(target: Record<string, unknown>, annotations?: Record<string, unknown>): void {
+  if (!annotations) return;
+  for (const [term, value] of Object.entries(annotations)) {
+    target[`@${term}`] = value;
+  }
+}
+
+function fullyQualifyName(model: EdmModel, name?: string): string | undefined {
+  if (!name) return undefined;
+  if (name.includes('.')) return name;
+  return `${model.namespace}.${name}`;
+}
+
 export function generateMetadata(model: EdmModel, serviceRoot: string): any {
   const metadata: any = {
     "@odata.context": `${serviceRoot}/$metadata`,
@@ -14,6 +27,7 @@ export function generateMetadata(model: EdmModel, serviceRoot: string): any {
       "$Kind": "Schema",
       "$Alias": model.namespace
     };
+    applyAnnotations(metadata[model.namespace], model.annotations);
 
     // Add entity types
     if (model.entityTypes) {
@@ -27,27 +41,36 @@ export function generateMetadata(model: EdmModel, serviceRoot: string): any {
           entityTypeDef.$Key = entityType.key.map(key => `${entityType.name}/${key}`);
         }
 
+        if (entityType.baseType) {
+          entityTypeDef.$BaseType = fullyQualifyName(model, entityType.baseType);
+        }
+
         // Add properties
         if (entityType.properties) {
           for (const prop of entityType.properties) {
-            entityTypeDef[prop.name] = {
+            const propDef: Record<string, unknown> = {
               $Type: prop.type
             };
             if (prop.nullable !== undefined) {
-              entityTypeDef[prop.name].$Nullable = prop.nullable;
+              propDef.$Nullable = prop.nullable;
             }
+            applyAnnotations(propDef, prop.annotations);
+            entityTypeDef[prop.name] = propDef;
           }
         }
 
         // Add navigation properties
         if (entityType.navigation) {
           for (const nav of entityType.navigation) {
-            entityTypeDef[nav.name] = {
+            const navDef: Record<string, unknown> = {
               $Type: nav.collection ? `Collection(${nav.target})` : nav.target
             };
+            applyAnnotations(navDef, nav.annotations);
+            entityTypeDef[nav.name] = navDef;
           }
         }
 
+        applyAnnotations(entityTypeDef, entityType.annotations);
         metadata[model.namespace][entityType.name] = entityTypeDef;
       }
     }
@@ -110,6 +133,7 @@ export function generateMetadata(model: EdmModel, serviceRoot: string): any {
           funcDef.$ReturnType = func.returnType;
         }
 
+        applyAnnotations(funcDef, func.annotations);
         metadata[model.namespace][func.name] = funcDef;
       }
     }
@@ -133,6 +157,7 @@ export function generateMetadata(model: EdmModel, serviceRoot: string): any {
           actionDef.$ReturnType = action.returnType;
         }
 
+        applyAnnotations(actionDef, action.annotations);
         metadata[model.namespace][action.name] = actionDef;
       }
     }
@@ -148,37 +173,62 @@ export function generateMetadata(model: EdmModel, serviceRoot: string): any {
   // Add entity sets
   if (model.entitySets) {
     for (const entitySet of model.entitySets) {
-      metadata[containerName][entitySet.name] = {
+      const setDef: Record<string, unknown> = {
         $Collection: true,
-        $Type: `${model.namespace}.${entitySet.entityType}`
+        $Type: fullyQualifyName(model, entitySet.entityType)
       };
+
+      if (entitySet.navigationBindings && entitySet.navigationBindings.length > 0) {
+        setDef.$NavigationPropertyBinding = entitySet.navigationBindings.reduce<Record<string, string>>((acc, binding) => {
+          acc[binding.path] = fullyQualifyName(model, binding.target) ?? binding.target;
+          return acc;
+        }, {});
+      }
+
+      applyAnnotations(setDef, entitySet.annotations);
+      metadata[containerName][entitySet.name] = setDef;
     }
   }
 
   // Add singletons
   if (model.singletons) {
     for (const singleton of model.singletons) {
-      metadata[containerName][singleton.name] = {
-        $Type: `${model.namespace}.${singleton.entityType}`
+      const singletonDef: Record<string, unknown> = {
+        $Type: fullyQualifyName(model, singleton.entityType)
       };
+      if (singleton.title) {
+        singletonDef['@Org.OData.Display.V1.Title'] = singleton.title;
+      }
+      applyAnnotations(singletonDef, singleton.annotations);
+      metadata[containerName][singleton.name] = singletonDef;
     }
   }
 
   // Add function imports
   if (model.functionImports) {
     for (const funcImport of model.functionImports) {
-      metadata[containerName][funcImport.name] = {
+      const funcImportDef: Record<string, unknown> = {
         $Function: `${model.namespace}.${funcImport.function}`
       };
+      if (funcImport.title) {
+        funcImportDef['@Org.OData.Display.V1.Title'] = funcImport.title;
+      }
+      applyAnnotations(funcImportDef, funcImport.annotations);
+      metadata[containerName][funcImport.name] = funcImportDef;
     }
   }
 
   // Add action imports
   if (model.actionImports) {
     for (const actionImport of model.actionImports) {
-      metadata[containerName][actionImport.name] = {
+      const actionImportDef: Record<string, unknown> = {
         $Action: `${model.namespace}.${actionImport.action}`
       };
+      if (actionImport.title) {
+        actionImportDef['@Org.OData.Display.V1.Title'] = actionImport.title;
+      }
+      applyAnnotations(actionImportDef, actionImport.annotations);
+      metadata[containerName][actionImport.name] = actionImportDef;
     }
   }
 

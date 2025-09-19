@@ -40,7 +40,17 @@ describe("OData metadata and service document helpers", () => {
     const richModel: EdmModel = {
       namespace: "Demo",
       containerName: "DemoContainer",
+      annotations: { "Org.OData.Display.V1.Description": "Demo schema" },
       entityTypes: [
+        {
+          name: "Person",
+          key: ["id"],
+          properties: [
+            { name: "id", type: "Edm.Int32" },
+            { name: "name", type: "Edm.String", annotations: { "Org.OData.Display.V1.DisplayName": "Full Name" } },
+          ],
+          annotations: { "Org.OData.Description.V1.Description": "Base person entity" },
+        },
         {
           name: "Order",
           key: ["id"],
@@ -48,7 +58,8 @@ describe("OData metadata and service document helpers", () => {
             { name: "id", type: "Edm.Int32" },
             { name: "total", type: "Edm.Decimal" },
           ],
-          navigation: [{ name: "customer", target: "Customer", collection: false }],
+          navigation: [{ name: "customer", target: "Customer", collection: false, annotations: { "Org.OData.Display.V1.Description": "Related customer" } }],
+          annotations: { "Org.OData.Description.V1.Description": "Sales order" },
         },
         {
           name: "Customer",
@@ -58,11 +69,19 @@ describe("OData metadata and service document helpers", () => {
             { name: "name", type: "Edm.String" },
             { name: "preferences", type: "Demo.CustomerPreferences", nullable: true },
           ],
+          navigation: [{ name: "orders", target: "Order", collection: true }],
+          baseType: "Person",
+          annotations: { "Org.OData.Capabilities.V1.SupportsDelete": true },
         },
       ],
       entitySets: [
-        { name: "Orders", entityType: "Order" },
-        { name: "Customers", entityType: "Customer" },
+        { name: "Orders", entityType: "Order", title: "Orders", annotations: { "Org.OData.Display.V1.LongDescription": "Active sales orders" } },
+        {
+          name: "Customers",
+          entityType: "Customer",
+          navigationBindings: [{ path: "orders", target: "Orders" }],
+          annotations: { "Org.OData.Display.V1.Title": "Customers" },
+        },
       ],
       complexTypes: [
         {
@@ -81,9 +100,9 @@ describe("OData metadata and service document helpers", () => {
           ],
         },
       ],
-      singletons: [{ name: "Configuration", entityType: "Customer" }],
-      functionImports: [{ name: "TopOrders", function: "GetTopOrders" }],
-      actionImports: [{ name: "ResetStore", action: "ResetStoreAction" }],
+      singletons: [{ name: "Configuration", entityType: "Customer", title: "Configuration", annotations: { "Org.OData.Display.V1.Description": "Global configuration" } }],
+      functionImports: [{ name: "TopOrders", function: "GetTopOrders", title: "Top Orders" }],
+      actionImports: [{ name: "ResetStore", action: "ResetStoreAction", title: "Reset Store" }],
     };
 
     it("sets schema information with namespace", () => {
@@ -101,6 +120,7 @@ describe("OData metadata and service document helpers", () => {
       expect(orderType.$Key).toContain("Order/id");
       expect(orderType.total.$Type).toBe("Edm.Decimal");
       expect(orderType.customer.$Type).toBe("Customer");
+      expect(orderType.customer["@Org.OData.Display.V1.Description"]).toBe("Related customer");
     });
 
     it("includes complex and enum types", () => {
@@ -118,6 +138,17 @@ describe("OData metadata and service document helpers", () => {
       expect(container.Configuration.$Type).toBe("Demo.Customer");
       expect(container.TopOrders.$Function).toBe("Demo.GetTopOrders");
       expect(container.ResetStore.$Action).toBe("Demo.ResetStoreAction");
+      expect(container.Customers.$NavigationPropertyBinding.orders).toBe("Demo.Orders");
+      expect(container.Customers["@Org.OData.Display.V1.Title"]).toBe("Customers");
+    });
+
+    it("captures inheritance and annotations", () => {
+      const metadata = generateMetadata(richModel, "https://api.example.com/odata");
+      const person = metadata.Demo.Person;
+      const customer = metadata.Demo.Customer;
+      expect(customer.$BaseType).toBe("Demo.Person");
+      expect(person["@Org.OData.Description.V1.Description"]).toBe("Base person entity");
+      expect(person.name["@Org.OData.Display.V1.DisplayName"]).toBe("Full Name");
     });
   });
 });

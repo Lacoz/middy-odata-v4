@@ -13,12 +13,14 @@ export interface EdmProperty {
   name: string;
   type: string;
   nullable?: boolean;
+  annotations?: Record<string, unknown>;
 }
 
 export interface EdmNavigationProperty {
   name: string;
   target: string;
   collection?: boolean;
+  annotations?: Record<string, unknown>;
 }
 
 export interface EdmEntityType {
@@ -26,12 +28,16 @@ export interface EdmEntityType {
   key: string[];
   properties: EdmProperty[];
   navigation?: EdmNavigationProperty[];
+  baseType?: string;
+  annotations?: Record<string, unknown>;
 }
 
 export interface EdmEntitySet {
   name: string;
   entityType: string;
   title?: string;
+  navigationBindings?: { path: string; target: string }[];
+  annotations?: Record<string, unknown>;
 }
 
 export interface EdmComplexType {
@@ -59,30 +65,35 @@ export interface EdmFunction {
   name: string;
   parameters?: EdmFunctionParameter[];
   returnType?: string;
+  annotations?: Record<string, unknown>;
 }
 
 export interface EdmAction {
   name: string;
   parameters?: EdmFunctionParameter[];
   returnType?: string;
+  annotations?: Record<string, unknown>;
 }
 
 export interface EdmFunctionImport {
   name: string;
   function: string;
   title?: string;
+  annotations?: Record<string, unknown>;
 }
 
 export interface EdmActionImport {
   name: string;
   action: string;
   title?: string;
+  annotations?: Record<string, unknown>;
 }
 
 export interface EdmSingleton {
   name: string;
   entityType: string;
   title?: string;
+  annotations?: Record<string, unknown>;
 }
 
 export interface EdmModel {
@@ -98,6 +109,7 @@ export interface EdmModel {
   singletons?: EdmSingleton[];
   containerName?: string;
   extends?: string;
+  annotations?: Record<string, unknown>;
 }
 
 export interface ODataExpandItem {

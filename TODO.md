@@ -298,7 +298,7 @@ This document identifies missing OData v4.01 features and test coverage gaps in 
 4. ✅ **Routing middleware data provisioning** — consistent entity-set loading pipeline exposed via middleware context (2025-09-19)
 
 ### **Medium Priority (Advanced Features)**
-1. **Metadata depth** — flesh out service/metadata documents with singletons, imports, annotations, and derived types.
+1. ✅ **Metadata depth** — service/metadata documents now emit annotations, derived types, and navigation bindings (2025-09-19).
 2. **Batch request execution** — replace mock handlers with real orchestration and error propagation.
 3. **Conditional request handling** — honour ETag/If-* headers consistently across CRUD helpers and middleware.
 4. **Partial updates (PATCH/MERGE)** — add JSON-Patch or delta support beyond current stubs.

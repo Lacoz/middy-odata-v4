@@ -120,6 +120,11 @@ For errors:
 - Prevents pathological expressions via depth/length limits
 - Timeouts and circuit-breakers for resolvers
 
+### 9) Metadata and service document generation
+
+- CSDL metadata emits schema-level annotations, entity inheritance via `$BaseType`, property/navigation annotations, and navigation bindings for sets
+- Service document lists entity sets, singletons, and imports with human-friendly titles for easy discovery
+
 ## Current Implementation Status
 
 ✅ **Completed**: Modular middleware architecture with comprehensive test suite
