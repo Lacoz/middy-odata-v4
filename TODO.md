@@ -59,42 +59,30 @@ This document identifies missing OData v4.01 features and test coverage gaps in 
 ## 2. **Advanced Filter Operations**
 
 ### 2.1 Collection Operators
-- **Status**: ⚠️ **PARTIALLY IMPLEMENTED**
-- **Missing Features**:
-  - `has` operator for collections (partially implemented)
-  - `in` operator for value lists
-  - `not in` operator
-  - Collection comparison operators
+- **Status**: ✅ **IMPLEMENTED (CORE)**
+- **Remaining Enhancements**:
+  - `not in` operator semantics
+  - Cross-collection comparison helpers
 
 ### 2.2 String Functions
-- **Status**: ❌ **NOT IMPLEMENTED**
+- **Status**: ⚠️ **PARTIALLY IMPLEMENTED**
+- **Shipped**: `contains`, `startswith`, `endswith`, `length`, `indexof`, `substring`, `tolower`, `toupper`, `trim`, `concat`
 - **Missing Features**:
-  - `contains()` function
-  - `startswith()` function
-  - `endswith()` function
-  - `length()` function
-  - `indexof()` function
-  - `substring()` function
-  - `tolower()` and `toupper()` functions
-  - `trim()`, `ltrim()`, `rtrim()` functions
-  - `concat()` function
+  - `ltrim()` and `rtrim()` helpers
+  - Culture-aware comparisons and collation controls
 
 ### 2.3 Date/Time Functions
-- **Status**: ❌ **NOT IMPLEMENTED**
+- **Status**: ⚠️ **PARTIALLY IMPLEMENTED**
+- **Shipped**: `year`, `month`, `day`, `hour`, `minute`, `second`, `now`, `maxdatetime`, `mindatetime`
 - **Missing Features**:
-  - `year()`, `month()`, `day()` functions
-  - `hour()`, `minute()`, `second()` functions
-  - `date()` and `time()` functions
-  - `now()` function
-  - `maxdatetime()` and `mindatetime()` functions
-  - `totalseconds()` function
-  - `fractionalseconds()` function
+  - `date()` and `time()` projections
+  - `totalseconds()` helper
+  - `fractionalseconds()` helper
 
 ### 2.4 Mathematical Functions
-- **Status**: ❌ **NOT IMPLEMENTED**
+- **Status**: ⚠️ **PARTIALLY IMPLEMENTED**
+- **Shipped**: `round`, `floor`, `ceiling`
 - **Missing Features**:
-  - `round()` function
-  - `floor()` and `ceiling()` functions
   - `abs()` function
   - `sqrt()` function
   - `power()` function
@@ -308,10 +296,10 @@ This document identifies missing OData v4.01 features and test coverage gaps in 
 ## Priority Implementation Order
 
 ### **High Priority (Core OData Features)**
-1. **Navigation resolvers for $expand** — wire async data providers into the routing middleware, honour nested query options, and respect context timeouts.
-2. **Complete $filter parity** — implement collection operators (`has`, `any`, `all`), parameter aliases, and remaining date/math helpers with strict model validation.
-3. **Production-ready advanced options** — deliver usable `$search`, `$compute`, and `$apply` pipelines (scoring, computed aliases, aggregations) instead of the current placeholder logic.
-4. **Routing middleware data provisioning** — streamline entity-set routing so handler authors can rely on consistent data loading and conformance checks.
+1. ✅ **Navigation resolvers for $expand** — async data providers wired into routing middleware with nested option support and timeout awareness (2025-09-19)
+2. ✅ **Complete $filter parity (phase 1)** — collection operators (`has`, `in`), lambda (`any`, `all`), parameter aliases, and core date/string/math helpers implemented
+3. ⏳ **Production-ready advanced options** — deliver usable `$search`, `$compute`, and `$apply` pipelines (scoring, computed aliases, aggregations) instead of the current placeholder logic.
+4. ✅ **Routing middleware data provisioning** — consistent entity-set loading pipeline exposed via middleware context (2025-09-19)
 
 ### **Medium Priority (Advanced Features)**
 1. **Metadata depth** — flesh out service/metadata documents with singletons, imports, annotations, and derived types.

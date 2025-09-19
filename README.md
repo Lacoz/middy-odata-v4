@@ -55,7 +55,7 @@ Expected outcome: structured `odata` object attached to request context, or a 40
 
 - Applies projection to plain JSON objects/arrays
 - For $expand:
-  - Invokes provided resolvers for navigation props
+  - Automatically hydrates navigation properties using configured routing data providers when custom resolvers are absent
   - Applies nested query options to expanded collections
   - Prevents N+1 via batched resolver interface (contract tested with mocks)
 
@@ -64,6 +64,7 @@ Expected outcome: structured `odata` object attached to request context, or a 40
 - $filter:
   - Evaluates expression against item objects
   - Supports null handling and type coercions (string/number/bool/date)
+  - Includes collection operators (`has`, `in`), parameter aliases, and lambda operators (`any`, `all`)
 - $orderby:
   - Stable multi-key sort
   - Null ordering consistent with OData defaults
@@ -120,14 +121,12 @@ For errors:
 
 ✅ **Completed**: Modular middleware architecture with comprehensive test suite
 ✅ **Completed**: Basic query parsing for $select, $orderby, $top, $skip, $count
-✅ **Completed**: Basic $filter parsing (evaluation partially implemented)
-✅ **Completed**: Basic $expand structure (functionality limited)
+✅ **Completed**: $filter evaluation with collection operators, parameter aliases, and lambda support (`any`, `all`)
+✅ **Completed**: $expand navigation resolution backed by routing data providers with nested option handling
 ✅ **Completed**: OData response serialization and error handling
 ✅ **Completed**: Middleware composition and configuration system
 
 🔄 **In Progress**: Full OData v4.01 functionality implementation
-- $filter evaluation needs completion
-- $expand navigation property resolution needs implementation
 - $search, $compute, $apply are disabled by default (minimal implementation)
 
 ⚠️ **Note**: Some advanced features are still being implemented
