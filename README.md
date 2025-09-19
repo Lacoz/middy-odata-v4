@@ -43,7 +43,7 @@ Covers decoding and validation of query options from API Gateway events.
 - $search (disabled by default)
   - When enabled, supports boolean operators (AND/OR/NOT), field-scoped terms, quoted phrases, wildcards, and numeric ranges
   - Returns validation errors for malformed Lucene syntax or unsupported features
-  - Annotates matches with `@search.score` and sorts results by relevance
+  - Annotates matches with `@search.score` plus highlight snippets (`@search.highlights`) and sorts results by relevance
 - $format (ignored by default)
   - Accepted values: json (default); non-json rejected
 - $compute (optional)

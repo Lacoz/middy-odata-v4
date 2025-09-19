@@ -32,7 +32,7 @@ This document identifies missing OData v4.01 features and test coverage gaps in 
 - **Remaining Work**:
   - Advanced boosting strategies, tf/idf-style weighting, and configurable scoring profiles
   - Language-specific analyzers and stemming
-  - Hit highlighting and analyzer configuration per property
+  - Analyzer configuration per property and culture-aware tokenization
 
 ### 1.2 `$compute` (Computed Properties)
 - **Status**: ⚠️ **PARTIALLY IMPLEMENTED**

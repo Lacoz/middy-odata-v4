@@ -21,9 +21,46 @@ interface TermSpec {
   boost: number;
 }
 
+interface CandidateString {
+  value: string;
+  path?: string;
+}
+
 interface SearchEvaluation {
   matched: boolean;
   score: number;
+  highlights: Record<string, string[]>;
+}
+
+function emptyEvaluation(): SearchEvaluation {
+  return { matched: false, score: 0, highlights: {} };
+}
+
+function mergeHighlightMaps(...maps: Record<string, string[]>[]): Record<string, string[]> {
+  const merged: Record<string, string[]> = {};
+  for (const map of maps) {
+    for (const [key, values] of Object.entries(map)) {
+      if (!merged[key]) {
+        merged[key] = [];
+      }
+      for (const highlight of values) {
+        if (!merged[key].includes(highlight)) {
+          merged[key].push(highlight);
+        }
+      }
+    }
+  }
+  return merged;
+}
+
+function addHighlight(map: Record<string, string[]>, path: string, text: string): void {
+  if (!text) return;
+  if (!map[path]) {
+    map[path] = [];
+  }
+  if (!map[path].includes(text)) {
+    map[path].push(text);
+  }
 }
 
 // Enhanced search implementation covering the feature set exercised by the tests
@@ -58,15 +95,18 @@ export function searchData<T extends ODataEntity>(rows: T[], options: ODataQuery
   });
 
   return evaluated.map(({ row, evaluation }) => {
-    if (evaluation.score <= 0) {
-      return row;
-    }
-    const score = Number(evaluation.score.toFixed(4));
-    if ((row as Record<string, unknown>)["@search.score"] === score) {
+    const hasHighlights = Object.keys(evaluation.highlights).length > 0;
+    const score = evaluation.score > 0 ? Number(evaluation.score.toFixed(4)) : 0;
+    if (!hasHighlights && score <= 0) {
       return row;
     }
     const annotated = { ...(row as Record<string, unknown>) };
-    annotated["@search.score"] = score;
+    if (score > 0) {
+      annotated["@search.score"] = score;
+    }
+    if (hasHighlights) {
+      annotated["@search.highlights"] = evaluation.highlights;
+    }
     return annotated as T;
   });
 }
@@ -220,6 +260,9 @@ function evaluateSearchExpression<T extends ODataEntity>(node: SearchNode, entit
       return {
         matched: leftAnd.matched && rightAnd.matched,
         score: (leftAnd.matched && rightAnd.matched) ? leftAnd.score + rightAnd.score : 0,
+        highlights: (leftAnd.matched && rightAnd.matched)
+          ? mergeHighlightMaps(leftAnd.highlights, rightAnd.highlights)
+          : {},
       };
     }
     case 'or': {
@@ -228,6 +271,7 @@ function evaluateSearchExpression<T extends ODataEntity>(node: SearchNode, entit
       return {
         matched: leftOr.matched || rightOr.matched,
         score: leftOr.score + rightOr.score,
+        highlights: mergeHighlightMaps(leftOr.highlights, rightOr.highlights),
       };
     }
     case 'not': {
@@ -235,36 +279,37 @@ function evaluateSearchExpression<T extends ODataEntity>(node: SearchNode, entit
       return {
         matched: !inner.matched,
         score: !inner.matched ? 0.5 : 0,
+        highlights: {},
       };
     }
     default:
-      return { matched: false, score: 0 };
+      return emptyEvaluation();
   }
 }
 
 function matchSearchTerm(entity: ODataEntity, rawTerm: string): SearchEvaluation {
   const term = rawTerm.trim();
-  if (!term) return { matched: false, score: 0 };
+  if (!term) return emptyEvaluation();
 
   const colonIndex = term.indexOf(':');
   if (colonIndex > -1) {
     const field = term.slice(0, colonIndex).trim();
     const value = term.slice(colonIndex + 1);
-    if (!field) return { matched: false, score: 0 };
+    if (!field) return emptyEvaluation();
     return matchFieldTerm(entity, field, value);
   }
 
   const spec = analyseTerm(term);
-  if (!spec) return { matched: false, score: 0 };
+  if (!spec) return emptyEvaluation();
 
-  const score = matchesSpec(spec, entity, true);
-  return { matched: score > 0, score };
+  const { score, highlights } = matchesSpec(spec, entity, true);
+  return { matched: score > 0, score, highlights };
 }
 
 function matchFieldTerm(entity: ODataEntity, fieldPath: string, rawValue: string): SearchEvaluation {
   const candidate = getNestedValue(entity, fieldPath);
   if (candidate === undefined) {
-    return { matched: false, score: 0 };
+    return emptyEvaluation();
   }
 
   const trimmed = rawValue.trim();
@@ -273,23 +318,32 @@ function matchFieldTerm(entity: ODataEntity, fieldPath: string, rawValue: string
     const min = Number(rangeMatch[1]);
     const max = Number(rangeMatch[2]);
     if (Number.isNaN(min) || Number.isNaN(max)) {
-      return { matched: false, score: 0 };
+      return emptyEvaluation();
     }
 
     let score = 0;
+    const highlights: Record<string, string[]> = {};
     if (Array.isArray(candidate)) {
       score = candidate.reduce((acc, value) => acc + (isValueInRange(value, min, max) ? 1 : 0), 0);
+      if (score > 0) {
+        for (const value of candidate) {
+          if (isValueInRange(value, min, max)) {
+            addHighlight(highlights, fieldPath, `<em>${String(value)}</em>`);
+          }
+        }
+      }
     } else if (isValueInRange(candidate, min, max)) {
       score = 1;
+      addHighlight(highlights, fieldPath, `<em>${String(candidate)}</em>`);
     }
-    return { matched: score > 0, score };
+    return { matched: score > 0, score, highlights };
   }
 
   const spec = analyseTerm(trimmed);
-  if (!spec) return { matched: false, score: 0 };
+  if (!spec) return emptyEvaluation();
 
-  const score = matchesSpec(spec, candidate, false, fieldPath);
-  return { matched: score > 0, score };
+  const { score, highlights } = matchesSpec(spec, candidate, false, fieldPath);
+  return { matched: score > 0, score, highlights };
 }
 
 function analyseTerm(raw: string): TermSpec | null {
@@ -333,19 +387,31 @@ function analyseTerm(raw: string): TermSpec | null {
   };
 }
 
-function matchesSpec(spec: TermSpec, value: unknown, restrictToSearchable = false, path?: string): number {
+function matchesSpec(
+  spec: TermSpec,
+  value: unknown,
+  restrictToSearchable = false,
+  path?: string
+): { score: number; highlights: Record<string, string[]> } {
   const candidates = collectCandidateStrings(value, restrictToSearchable, path);
-  if (candidates.length === 0) return 0;
+  if (candidates.length === 0) {
+    return { score: 0, highlights: {} };
+  }
 
   let totalScore = 0;
   const baseWeight = computeTermWeight(spec, path);
+  const highlights: Record<string, string[]> = {};
+
   for (const candidate of candidates) {
-    const lowerCandidate = candidate.toLowerCase();
+    const lowerCandidate = candidate.value.toLowerCase();
+    const highlightPath = candidate.path ?? path ?? '@search';
 
     if (spec.hasWildcard) {
-      const regex = wildcardToRegex(spec.normalized);
+      const regex = wildcardRegex(spec.normalized);
       if (regex.test(lowerCandidate)) {
         totalScore += baseWeight;
+        const highlighted = applyHighlight(candidate.value, regex);
+        if (highlighted) addHighlight(highlights, highlightPath, highlighted);
       }
       continue;
     }
@@ -353,6 +419,9 @@ function matchesSpec(spec: TermSpec, value: unknown, restrictToSearchable = fals
     if (spec.isPhrase) {
       if (lowerCandidate.includes(spec.normalized)) {
         totalScore += baseWeight + 1;
+        const regex = new RegExp(escapeRegex(spec.normalized), 'gi');
+        const highlighted = applyHighlight(candidate.value, regex);
+        if (highlighted) addHighlight(highlights, highlightPath, highlighted);
       }
       continue;
     }
@@ -360,26 +429,33 @@ function matchesSpec(spec: TermSpec, value: unknown, restrictToSearchable = fals
     if (spec.isFuzzy) {
       if (lowerCandidate.includes(spec.normalized)) {
         totalScore += baseWeight;
+        const regex = new RegExp(escapeRegex(spec.normalized), 'gi');
+        const highlighted = applyHighlight(candidate.value, regex);
+        if (highlighted) addHighlight(highlights, highlightPath, highlighted);
         continue;
       }
       if (spec.normalized.length <= 1) {
         continue;
       }
-      const fuzzyMatch = lowerCandidate
-        .split(/\s+/)
-        .some(word => levenshteinDistance(word, spec.normalized) <= 1);
+      const words = lowerCandidate.split(/\s+/);
+      const fuzzyMatch = words.some(word => levenshteinDistance(word, spec.normalized) <= 1);
       if (fuzzyMatch) {
         totalScore += Math.max(baseWeight * 0.5, 0.25);
+        const highlighted = candidate.value;
+        addHighlight(highlights, highlightPath, `<em>${highlighted}</em>`);
       }
       continue;
     }
 
     if (lowerCandidate.includes(spec.normalized)) {
       totalScore += baseWeight;
+      const regex = new RegExp(escapeRegex(spec.normalized), 'gi');
+      const highlighted = applyHighlight(candidate.value, regex);
+      if (highlighted) addHighlight(highlights, highlightPath, highlighted);
     }
   }
 
-  return totalScore;
+  return { score: totalScore, highlights };
 }
 
 function computeTermWeight(spec: TermSpec, path?: string): number {
@@ -390,10 +466,17 @@ function computeTermWeight(spec: TermSpec, path?: string): number {
   return weight;
 }
 
-function wildcardToRegex(term: string): RegExp {
+function wildcardRegex(term: string): RegExp {
   const escaped = escapeRegex(term);
-  const pattern = `^${escaped.replace(/\\\*/g, '.*').replace(/\\\?/g, '.')}$`;
-  return new RegExp(pattern);
+  const pattern = escaped.replace(/\\\*/g, '.*').replace(/\\\?/g, '.');
+  return new RegExp(pattern, 'gi');
+}
+
+function applyHighlight(value: string, regex: RegExp): string | null {
+  const flags = regex.flags.includes('g') ? regex.flags : `${regex.flags}g`;
+  const globalRegex = new RegExp(regex.source, flags);
+  const highlighted = value.replace(globalRegex, (match) => `<em>${match}</em>`);
+  return highlighted === value ? null : highlighted;
 }
 
 function escapeRegex(value: string): string {
@@ -409,19 +492,23 @@ const SEARCHABLE_PROPERTY_NAMES = new Set([
   'label'
 ]);
 
-function collectCandidateStrings(value: unknown, restrictToSearchable: boolean, path?: string): string[] {
+function collectCandidateStrings(
+  value: unknown,
+  restrictToSearchable: boolean,
+  path?: string
+): CandidateString[] {
   if (value == null) return [];
 
   if (typeof value === 'string') {
     if (!restrictToSearchable || isSearchablePath(path)) {
-      return [value];
+      return [{ value, path }];
     }
     return [];
   }
 
   if (typeof value === 'number' || typeof value === 'boolean') {
     if (restrictToSearchable) return [];
-    return [String(value)];
+    return [{ value: String(value), path }];
   }
 
   if (Array.isArray(value)) {

@@ -79,6 +79,8 @@ describe("$search, $compute, $apply - Advanced OData v4.01 Features", () => {
       const result = searchData(PRODUCTS, { search: "name:A^3 OR name:B" });
       expect(result).toHaveLength(2);
       expect(result[0]["@search.score"]).toBeGreaterThan(result[1]["@search.score"]);
+      const boostedHighlight = result[0]["@search.highlights"].name[0];
+      expect(boostedHighlight).toContain("<em>");
     });
 
     it("should annotate results with @search.score and order by relevance", () => {
@@ -93,6 +95,10 @@ describe("$search, $compute, $apply - Advanced OData v4.01 Features", () => {
       expect(result[0]).toHaveProperty("@search.score");
       expect(result[1]).toHaveProperty("@search.score");
       expect(result[0]["@search.score"]).toBeGreaterThan(result[1]["@search.score"]);
+      expect(result[0]["@search.highlights"]).toBeDefined();
+      const highlight = result[0]["@search.highlights"].name[0];
+      expect(highlight).toContain("<em>");
+      expect(highlight.toLowerCase()).toContain("alpha");
       expect(result.map(item => item.id)).toEqual([1, 2]);
     });
 
