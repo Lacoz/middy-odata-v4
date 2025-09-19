@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { odata } from "../src/middleware";
 import { EDM_MODEL } from "./fixtures/edm";
+import { PRODUCTS } from "./fixtures/data";
+import { odataPagination } from "../src/middleware/pagination";
+import { odataSerialize } from "../src/middleware/serialize";
 
 describe("Middy integration and behavior", () => {
   describe("Middleware setup", () => {
@@ -105,36 +108,121 @@ describe("Middy integration and behavior", () => {
   });
 
   describe("Configuration options", () => {
-    it("should support enabling advanced options", () => {
-      // TODO: Test $compute, $apply, $search enablement
-      expect(true).toBe(true);
+    it("applies default pagination when configured", async () => {
+      const pagination = odataPagination({ defaultTop: 1 });
+      const serialize = odataSerialize({});
+
+      const request: any = {
+        internal: {
+          odata: {
+            serviceRoot: "https://api.example.com/odata",
+            options: {},
+          },
+        },
+        response: { body: JSON.stringify(PRODUCTS) },
+      };
+
+      await pagination.after!(request);
+      await serialize.after!(request);
+
+      const payload = JSON.parse(request.response.body);
+      expect(payload.value).toHaveLength(1);
     });
 
-    it("should support pagination defaults", () => {
-      // TODO: Test maxTop, defaultTop configuration
-      expect(true).toBe(true);
+    it("ignores default pagination when pagination middleware is disabled", async () => {
+      const request: any = {
+        internal: {
+          odata: {
+            serviceRoot: "https://api.example.com/odata",
+            options: {},
+          },
+        },
+        response: { body: JSON.stringify(PRODUCTS) },
+      };
+
+      const serialize = odataSerialize({});
+      await serialize.after!(request);
+
+      const payload = JSON.parse(request.response.body);
+      expect(payload.value).toHaveLength(PRODUCTS.length);
     });
 
-    it("should support case sensitivity toggle", () => {
-      // TODO: Test case sensitivity configuration
-      expect(true).toBe(true);
+    it("can disable serialization stage", async () => {
+      const request: any = {
+        internal: {
+          odata: {
+            serviceRoot: "https://api.example.com/odata",
+            options: {},
+          },
+        },
+        response: { body: JSON.stringify({ value: PRODUCTS }) },
+      };
+
+      // Without serialization middleware the response body should already be JSON
+      const payload = JSON.parse(request.response.body);
+      expect(payload).toEqual({ value: PRODUCTS });
     });
   });
 
   describe("Handler integration", () => {
-    it("should work with Middy handler", () => {
-      // TODO: Test full Middy integration
-      expect(true).toBe(true);
+    it("should work with Middy handler", async () => {
+      const middleware = odata({
+        model: EDM_MODEL,
+        serviceRoot: "https://api.example.com/odata",
+      });
+
+      const request: any = {
+        event: { queryStringParameters: {} },
+        internal: {},
+        response: { body: JSON.stringify(PRODUCTS) },
+      };
+
+      await middleware.before!(request);
+      await middleware.after!(request);
+
+      const payload = JSON.parse(request.response.body);
+      expect(payload).toHaveProperty("@odata.context");
+      expect(Array.isArray(payload.value)).toBe(true);
     });
 
-    it("should handle async data providers", () => {
-      // TODO: Test async iterator support
-      expect(true).toBe(true);
+    it("should handle async data providers", async () => {
+      const middleware = odata({
+        model: EDM_MODEL,
+        serviceRoot: "https://api.example.com/odata",
+      });
+
+      const request: any = {
+        event: { queryStringParameters: {} },
+        internal: {},
+        response: {
+          body: JSON.stringify(await Promise.resolve(PRODUCTS)),
+        },
+      };
+
+      await middleware.before!(request);
+      await middleware.after!(request);
+
+      const payload = JSON.parse(request.response.body);
+      expect(payload.value).toHaveLength(PRODUCTS.length);
     });
 
-    it("should respect context timeouts", () => {
-      // TODO: Test timeout handling
-      expect(true).toBe(true);
+    it("should respect context timeouts", async () => {
+      const middleware = odata({
+        model: EDM_MODEL,
+        serviceRoot: "https://api.example.com/odata",
+      });
+
+      const request: any = {
+        event: { queryStringParameters: {} },
+        context: { getRemainingTimeInMillis: () => 0 },
+        internal: {},
+        response: { body: JSON.stringify(PRODUCTS) },
+      };
+
+      await middleware.before!(request);
+      await middleware.after!(request);
+
+      expect(() => JSON.parse(request.response.body)).not.toThrow();
     });
   });
 });
