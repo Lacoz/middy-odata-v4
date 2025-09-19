@@ -308,20 +308,17 @@ This document identifies missing OData v4.01 features and test coverage gaps in 
 ## Priority Implementation Order
 
 ### **High Priority (Core OData Features)**
-1. **$search** implementation and testing
-2. **$compute** implementation and testing
-3. **$apply** implementation and testing
-4. **String functions** in filters
-5. **Date/time functions** in filters
-6. **Collection operators** completion
+1. **Navigation resolvers for $expand** — wire async data providers into the routing middleware, honour nested query options, and respect context timeouts.
+2. **Complete $filter parity** — implement collection operators (`has`, `any`, `all`), parameter aliases, and remaining date/math helpers with strict model validation.
+3. **Production-ready advanced options** — deliver usable `$search`, `$compute`, and `$apply` pipelines (scoring, computed aliases, aggregations) instead of the current placeholder logic.
+4. **Routing middleware data provisioning** — streamline entity-set routing so handler authors can rely on consistent data loading and conformance checks.
 
 ### **Medium Priority (Advanced Features)**
-1. **Complex types** support
-2. **Enum types** support
-3. **Annotations** support
-4. **Batch requests** support
-5. **Conditional requests** completion
-6. **Partial updates** (PATCH)
+1. **Metadata depth** — flesh out service/metadata documents with singletons, imports, annotations, and derived types.
+2. **Batch request execution** — replace mock handlers with real orchestration and error propagation.
+3. **Conditional request handling** — honour ETag/If-* headers consistently across CRUD helpers and middleware.
+4. **Partial updates (PATCH/MERGE)** — add JSON-Patch or delta support beyond current stubs.
+5. **Example parity** — refresh simple/complex examples to demonstrate the implemented feature set.
 
 ### **Low Priority (Nice to Have)**
 1. **Authentication/Authorization** framework
@@ -347,5 +344,5 @@ This document identifies missing OData v4.01 features and test coverage gaps in 
 
 ---
 
-*Last Updated: [Current Date]*
-*Next Review: [Date + 1 month]*
+*Last Updated: 2025-09-19*
+*Next Review: 2025-10-19*
