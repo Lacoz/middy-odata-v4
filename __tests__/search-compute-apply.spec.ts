@@ -93,7 +93,7 @@ describe("$search, $compute, $apply - Advanced OData v4.01 Features", () => {
     });
   });
 
-  describe.skip("$compute", () => {
+  describe("$compute", () => {
     it("should compute simple arithmetic expressions", () => {
       const result = computeData(PRODUCTS, { compute: ["price + categoryId"] });
       expect(result[0]).toHaveProperty("price_plus_categoryId");
