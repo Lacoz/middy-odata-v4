@@ -18,6 +18,7 @@ interface TermSpec {
   isPhrase: boolean;
   isFuzzy: boolean;
   hasWildcard: boolean;
+  boost: number;
 }
 
 interface SearchEvaluation {
@@ -301,8 +302,13 @@ function analyseTerm(raw: string): TermSpec | null {
     term = term.slice(1, -1);
   }
 
+  let boost = 1;
   const boostIndex = term.indexOf('^');
   if (boostIndex !== -1) {
+    const boostValue = Number(term.slice(boostIndex + 1));
+    if (!Number.isNaN(boostValue) && boostValue > 0) {
+      boost = boostValue;
+    }
     term = term.slice(0, boostIndex);
   }
 
@@ -322,7 +328,8 @@ function analyseTerm(raw: string): TermSpec | null {
     normalized: term.toLowerCase(),
     isPhrase,
     isFuzzy,
-    hasWildcard
+    hasWildcard,
+    boost,
   };
 }
 
@@ -331,27 +338,28 @@ function matchesSpec(spec: TermSpec, value: unknown, restrictToSearchable = fals
   if (candidates.length === 0) return 0;
 
   let totalScore = 0;
+  const baseWeight = computeTermWeight(spec, path);
   for (const candidate of candidates) {
     const lowerCandidate = candidate.toLowerCase();
 
     if (spec.hasWildcard) {
       const regex = wildcardToRegex(spec.normalized);
       if (regex.test(lowerCandidate)) {
-        totalScore += computeTermWeight(spec, path);
+        totalScore += baseWeight;
       }
       continue;
     }
 
     if (spec.isPhrase) {
       if (lowerCandidate.includes(spec.normalized)) {
-        totalScore += computeTermWeight(spec, path) + 1;
+        totalScore += baseWeight + 1;
       }
       continue;
     }
 
     if (spec.isFuzzy) {
       if (lowerCandidate.includes(spec.normalized)) {
-        totalScore += computeTermWeight(spec, path);
+        totalScore += baseWeight;
         continue;
       }
       if (spec.normalized.length <= 1) {
@@ -361,13 +369,13 @@ function matchesSpec(spec: TermSpec, value: unknown, restrictToSearchable = fals
         .split(/\s+/)
         .some(word => levenshteinDistance(word, spec.normalized) <= 1);
       if (fuzzyMatch) {
-        totalScore += Math.max(computeTermWeight(spec, path) - 0.25, 0.25);
+        totalScore += Math.max(baseWeight * 0.5, 0.25);
       }
       continue;
     }
 
     if (lowerCandidate.includes(spec.normalized)) {
-      totalScore += computeTermWeight(spec, path);
+      totalScore += baseWeight;
     }
   }
 
@@ -378,6 +386,7 @@ function computeTermWeight(spec: TermSpec, path?: string): number {
   let weight = 1;
   if (spec.hasWildcard) weight += 0.25;
   if (path) weight += 0.5;
+  weight *= spec.boost;
   return weight;
 }
 

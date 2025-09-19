@@ -76,8 +76,9 @@ describe("$search, $compute, $apply - Advanced OData v4.01 Features", () => {
     });
 
     it("should support search with boost queries", () => {
-      const result = searchData(PRODUCTS, { search: "A^2 B" });
+      const result = searchData(PRODUCTS, { search: "name:A^3 OR name:B" });
       expect(result).toHaveLength(2);
+      expect(result[0]["@search.score"]).toBeGreaterThan(result[1]["@search.score"]);
     });
 
     it("should annotate results with @search.score and order by relevance", () => {
