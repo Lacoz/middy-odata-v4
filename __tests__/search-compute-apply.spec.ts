@@ -170,7 +170,7 @@ describe("$search, $compute, $apply - Advanced OData v4.01 Features", () => {
     });
   });
 
-  describe.skip("$apply", () => {
+  describe("$apply", () => {
     it("should apply groupby transformation", () => {
       const result = applyData(PRODUCTS, { apply: "groupby" });
       expect(result).toHaveLength(3);
