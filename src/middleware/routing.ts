@@ -38,6 +38,12 @@ export function odataRouting(options: Partial<ODataRoutingOptions> = {}): Middle
           return;
         }
 
+        context.dataProviders = opts.dataProviders;
+        context.runtime = context.runtime || { dataCache: new Map() };
+        context.metadata = context.metadata || {};
+        ensureMiddlewareStack(context, "routing");
+        applyDeadlineMetadata(context, request);
+
         const { event } = request;
         const path = event.path || event.rawPath || "";
         
@@ -57,6 +63,7 @@ export function odataRouting(options: Partial<ODataRoutingOptions> = {}): Middle
         if (entitySetName) {
           // Set entity set in context
           context.entitySet = entitySetName;
+          context.entityType = resolveEntityTypeForSet(entitySetName, opts.model as EdmModel);
           
           // Get data from data provider
           const data = await getEntitySetData(entitySetName, opts as ODataRoutingOptions);
@@ -108,6 +115,7 @@ export function odataRouting(options: Partial<ODataRoutingOptions> = {}): Middle
           };
         }
 
+        setMiddlewareContext(request, context);
       } catch (error) {
         console.error('[OData Routing] Error in routing middleware:', error);
         // Continue to next middleware
@@ -148,4 +156,30 @@ async function getEntitySetData(entitySetName: string, options: ODataRoutingOpti
   }
   
   return undefined;
+}
+
+function resolveEntityTypeForSet(entitySetName: string, model: EdmModel): string | undefined {
+  const entitySet = model.entitySets?.find(set => set.name === entitySetName);
+  return entitySet?.entityType;
+}
+
+function ensureMiddlewareStack(context: any, name: string): void {
+  const stack: string[] = Array.isArray(context.metadata?.middlewareStack)
+    ? context.metadata.middlewareStack
+    : [];
+  if (!stack.includes(name)) {
+    stack.push(name);
+  }
+  context.metadata.middlewareStack = stack;
+}
+
+function applyDeadlineMetadata(context: any, request: any): void {
+  if (context.metadata?.deadline) {
+    return;
+  }
+
+  const remaining = request?.context?.getRemainingTimeInMillis?.();
+  if (typeof remaining === 'number' && Number.isFinite(remaining)) {
+    context.metadata.deadline = Date.now() + Math.max(0, remaining);
+  }
 }

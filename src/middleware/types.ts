@@ -6,15 +6,21 @@ export interface ODataMiddlewareContext {
   model: EdmModel;
   serviceRoot: string;
   entitySet?: string;
+  entityType?: string;
   options: ODataQueryOptions;
+  dataProviders?: Record<string, () => Promise<unknown[]> | unknown[]>;
   // Additional context for middleware communication
   data?: unknown;
   response?: unknown;
   error?: Error;
+  runtime?: {
+    dataCache?: Map<string, unknown[]>;
+  };
   // Metadata for debugging and logging
   metadata?: {
     executionTime?: number;
     middlewareStack?: string[];
+    deadline?: number;
     [key: string]: unknown;
   };
 }
@@ -32,6 +38,7 @@ export interface ODataShapeOptions {
   enableExpand?: boolean;
   maxExpandDepth?: number;
   expandResolvers?: Record<string, (context: ODataMiddlewareContext) => Promise<unknown>>;
+  autoResolveNavigation?: boolean;
   [key: string]: unknown;
 }
 

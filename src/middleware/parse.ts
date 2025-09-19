@@ -47,6 +47,9 @@ export function odataParse(options: Partial<ODataParseOptions> = {}): Middleware
           serviceRoot,
           entitySet: undefined, // Will be set by route handler or other middleware
           options: parsedOptions,
+          runtime: {
+            dataCache: new Map(),
+          },
           metadata: {
             middlewareStack: ["parse"],
             executionTime: Date.now(),
@@ -72,6 +75,9 @@ export function odataParse(options: Partial<ODataParseOptions> = {}): Middleware
           entitySet: undefined,
           options: {},
           error: error as Error,
+          runtime: {
+            dataCache: new Map(),
+          },
           metadata: {
             middlewareStack: ["parse"],
             executionTime: Date.now(),
