@@ -25,6 +25,10 @@ export {
 
 // Composition utilities
 export { composeMiddlewares } from "./middleware/compose";
+export { createODataResponse } from "./middleware/response";
+export type { CreateODataResponseOptions } from "./middleware/response";
+export { createODataLogger, deriveLogger } from "./middleware/logger";
+export type { ODataLogger, ODataLogLevel } from "./middleware/logger";
 
 // Middleware types and interfaces
 export type {
@@ -74,3 +78,5 @@ export {
 } from "./core/conformance-levels";
 export * from "./core/format-serialization";
 export * from "./core/search-compute-apply";
+export { applyODataQuery } from "./core/apply-query";
+export type { ApplyODataQueryResult, ApplyODataQuerySettings } from "./core/apply-query";

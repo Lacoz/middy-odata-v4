@@ -212,6 +212,39 @@ const handler = middy(baseHandler)
   .use(...odataLight({ model: EDM_MODEL, serviceRoot: "https://api.example.com/odata" }));
 ```
 
+### 4. Typed request context & handler helpers
+
+The middleware augments the Middy request object with a typed `odata` property so the parsed options are always available in
+your handler:
+
+```ts
+import middy from "@middy/core";
+import { odata, applyODataQuery, createODataResponse } from "middy-odata-v4";
+
+type Person = { id: number; name: string; age: number };
+
+const baseHandler = async (): Promise<Person[]> => {
+  return loadPeople();
+};
+
+const handler = middy(baseHandler)
+  .use(odata({ model: EDM_MODEL, serviceRoot: "https://api.example.com/odata" }))
+  .after(async (request) => {
+    const { odata: requestContext } = request;
+    if (!requestContext) return;
+
+    const data = request.response as Person[];
+    const result = applyODataQuery(data, requestContext.options, { includeCount: true });
+
+    request.response = createODataResponse(requestContext, result);
+  });
+```
+
+`applyODataQuery` mirrors the .NET `ODataQueryOptions.ApplyTo` helper: it filters, orders, paginates, and projects an in-memory
+collection while returning the total count when `$count=true`. `createODataResponse` turns the shaped data back into an
+OData-compliant payload with `@odata.context` and `@odata.count` headers so the handler only needs to return the Lambda
+response.
+
 ## Quick Start
 
 ```bash
@@ -396,7 +429,12 @@ const middleware = odata({
   serviceRoot: "https://api.example.com/odata",
   enable: { compute: false, apply: false, search: false },
   defaults: { maxTop: 1000, defaultTop: 50 },
+  logLevel: "info",
+  logger: console,
 });
+
+// `logLevel` accepts "silent" | "error" | "warn" | "info" | "debug". Provide a custom logger if you want to forward output to
+// a structured logging solution instead of `console`.
 ```
 
 ## Supported Query Options

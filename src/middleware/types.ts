@@ -1,5 +1,6 @@
 import type { MiddlewareObj } from "@middy/core";
 import type { EdmModel, ODataQueryOptions } from "../core/types";
+import type { ODataLogger, ODataLogLevel } from "./logger";
 
 // Base middleware context that all OData middlewares will use
 export interface ODataMiddlewareContext {
@@ -16,6 +17,7 @@ export interface ODataMiddlewareContext {
   runtime?: {
     dataCache?: Map<string, unknown[]>;
   };
+  logger?: ODataLogger;
   // Metadata for debugging and logging
   metadata?: {
     executionTime?: number;
@@ -31,6 +33,8 @@ export interface ODataParseOptions {
   serviceRoot: string | ((event: any) => string);
   validateAgainstModel?: boolean;
   strictMode?: boolean;
+  logger?: ODataLogger;
+  logLevel?: ODataLogLevel;
   [key: string]: unknown;
 }
 
@@ -114,6 +118,7 @@ export interface ODataRoutingOptions {
   dataProviders?: Record<string, () => Promise<unknown[]> | unknown[]>;
   enableRouting?: boolean;
   strictMode?: boolean;
+  logger?: ODataLogger;
   [key: string]: unknown;
 }
 
@@ -131,6 +136,8 @@ export interface ODataOptions {
   metadata?: Partial<ODataMetadataOptions>;
   conformance?: Partial<ODataConformanceOptions>;
   routing?: Partial<ODataRoutingOptions>;
+  logger?: Partial<ODataLogger> | ODataLogger;
+  logLevel?: ODataLogLevel;
   // Legacy options for backward compatibility
   enable?: {
     parse?: boolean;

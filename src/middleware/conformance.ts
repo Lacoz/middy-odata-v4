@@ -78,17 +78,19 @@ export function odataConformance(options: Partial<ODataConformanceOptions> = {})
         }
 
         // Add conformance level information to response headers
-        if (context.metadata?.conformance) {
+        const conformanceMeta = context.metadata?.conformance as { level?: string } | undefined;
+
+        if (conformanceMeta?.level) {
           const headers = request.response.headers || {};
-          
+
           // Add OData conformance header
-          headers["OData-Conformance"] = context.metadata.conformance.level;
-          
+          headers["OData-Conformance"] = conformanceMeta.level;
+
           // Add supported conformance levels
           headers["OData-Supported-Conformance"] = "minimal,intermediate,advanced";
-          
+
           // Add feature availability based on conformance level
-          const features = getAvailableFeatures(context.metadata.conformance.level);
+          const features = getAvailableFeatures(conformanceMeta.level);
           if (features.length > 0) {
             headers["OData-Features"] = features.join(",");
           }

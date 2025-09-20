@@ -1,12 +1,15 @@
 import type { MiddlewareObj } from "@middy/core";
 import type { EdmModel } from "../core/types";
 import { mergeMiddlewareOptions, getMiddlewareContext, setMiddlewareContext } from "./compose";
+import { createODataLogger, deriveLogger } from "./logger";
+import type { ODataLogger } from "./logger";
 
 export interface ODataRoutingOptions {
   model: EdmModel;
   dataProviders?: Record<string, () => Promise<unknown[]> | unknown[]>;
   enableRouting?: boolean;
   strictMode?: boolean;
+  logger?: ODataLogger;
   [key: string]: unknown;
 }
 
@@ -15,6 +18,7 @@ const DEFAULT_ROUTING_OPTIONS: ODataRoutingOptions = {
   dataProviders: {},
   enableRouting: true,
   strictMode: false,
+  logger: undefined,
 };
 
 /**
@@ -33,7 +37,10 @@ export function odataRouting(options: Partial<ODataRoutingOptions> = {}): Middle
     after: async (request: any) => {
       try {
         const context = getMiddlewareContext(request);
-        
+        const logger = opts.logger
+          ?? (context?.logger ? deriveLogger(context.logger, "[OData routing]") : undefined)
+          ?? createODataLogger({ prefix: "[OData routing]" });
+
         if (!context) {
           return;
         }
@@ -46,29 +53,28 @@ export function odataRouting(options: Partial<ODataRoutingOptions> = {}): Middle
 
         const { event } = request;
         const path = event.path || event.rawPath || "";
-        
-        console.log('[OData Routing] Processing path:', path);
-        
+        logger.debug("Processing path", path);
+
         // Skip if this is already handled by other middleware (metadata, functions, etc.)
-        if (path.endsWith('/$metadata') || path.endsWith('/%24metadata') || 
+        if (path.endsWith('/$metadata') || path.endsWith('/%24metadata') ||
             path === '/' || path.startsWith('/functions/') || path.startsWith('/actions/')) {
-          console.log('[OData Routing] Skipping path (handled by other middleware):', path);
+          logger.debug("Skipping path handled by another middleware", path);
           return;
         }
 
         // Extract entity set name from path
         const entitySetName = extractEntitySetName(path, opts.model as EdmModel);
-        console.log('[OData Routing] Extracted entity set name:', entitySetName);
-        
+        logger.debug("Resolved entity set", entitySetName);
+
         if (entitySetName) {
           // Set entity set in context
           context.entitySet = entitySetName;
           context.entityType = resolveEntityTypeForSet(entitySetName, opts.model as EdmModel);
-          
+
           // Get data from data provider
           const data = await getEntitySetData(entitySetName, opts as ODataRoutingOptions);
-          console.log('[OData Routing] Got data for', entitySetName, ':', data?.length, 'items');
-          
+          logger.info("Loaded entity set", entitySetName, "items", Array.isArray(data) ? data.length : 0);
+
           if (data !== undefined) {
             // Set the response with entity set data
             request.response = {
@@ -79,13 +85,11 @@ export function odataRouting(options: Partial<ODataRoutingOptions> = {}): Middle
               },
               body: JSON.stringify({ value: data })
             };
-            
-            console.log('[OData Routing] Set response for', entitySetName);
-            console.log('[OData Routing] Response set:', JSON.stringify(request.response, null, 2));
+
             // Update context with data
             context.data = { value: data };
             setMiddlewareContext(request, context);
-            
+
             // Return early to prevent base handler from being called
             return request.response;
           } else if (opts.strictMode) {
@@ -100,6 +104,7 @@ export function odataRouting(options: Partial<ODataRoutingOptions> = {}): Middle
                 } 
               })
             };
+            logger.warn("No data provider configured for entity set", entitySetName);
           }
         } else if (opts.strictMode) {
           // In strict mode, return 404 for unknown paths
@@ -110,14 +115,16 @@ export function odataRouting(options: Partial<ODataRoutingOptions> = {}): Middle
               error: { 
                 code: "NotFound", 
                 message: "Entity set not found" 
-              } 
+              }
             })
           };
+          logger.warn("Unknown entity set for path", path);
         }
 
         setMiddlewareContext(request, context);
       } catch (error) {
-        console.error('[OData Routing] Error in routing middleware:', error);
+        const logger = opts.logger ?? createODataLogger({ prefix: "[OData routing]" });
+        logger.error("Error in routing middleware", error);
         // Continue to next middleware
       }
     },

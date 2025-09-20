@@ -1,7 +1,5 @@
-import type { MiddlewareObj } from "@middy/core";
-// Removed unused imports
-
-declare const console: any;
+import type { MiddlewareObj, Request } from "@middy/core";
+import type { ODataMiddlewareContext } from "./types";
 
 
 /**
@@ -95,8 +93,14 @@ export function mergeMiddlewareOptions<T extends Record<string, unknown>>(
  * @param request Middy request object
  * @returns OData middleware context
  */
-export function getMiddlewareContext(request: any): any {
-  return request.internal?.odata || {};
+export function getMiddlewareContext(
+  request: Request & { odata?: ODataMiddlewareContext },
+): ODataMiddlewareContext {
+  const internal = request.internal as (Record<string, unknown> & {
+    odata?: ODataMiddlewareContext;
+  }) | undefined;
+
+  return request.odata ?? internal?.odata ?? ({} as ODataMiddlewareContext);
 }
 
 /**
@@ -104,7 +108,14 @@ export function getMiddlewareContext(request: any): any {
  * @param request Middy request object
  * @param context OData middleware context
  */
-export function setMiddlewareContext(request: any, context: any): void {
-  request.internal = request.internal || {};
-  request.internal.odata = context;
+export function setMiddlewareContext(
+  request: Request & { odata?: ODataMiddlewareContext },
+  context: ODataMiddlewareContext,
+): void {
+  const internal = (request.internal || {}) as Record<string, unknown> & {
+    odata?: ODataMiddlewareContext;
+  };
+  internal.odata = context;
+  request.internal = internal;
+  request.odata = context;
 }
