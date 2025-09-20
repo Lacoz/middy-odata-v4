@@ -3,6 +3,7 @@ import type { ODataParseOptions, ODataMiddlewareContext } from "./types";
 import type { EdmModel } from "../core/types";
 import { parseODataQuery } from "../core/parse";
 import { mergeMiddlewareOptions, setMiddlewareContext } from "./compose";
+import { createODataLogger } from "./logger";
 
 const DEFAULT_PARSE_OPTIONS: ODataParseOptions = {
   model: {} as any, // Will be provided by user
@@ -22,6 +23,7 @@ const DEFAULT_PARSE_OPTIONS: ODataParseOptions = {
  */
 export function odataParse(options: Partial<ODataParseOptions> = {}): MiddlewareObj {
   const opts = mergeMiddlewareOptions(DEFAULT_PARSE_OPTIONS, options);
+  const logger = opts.logger ?? createODataLogger({ level: opts.logLevel, prefix: "[OData]" });
 
   return {
     before: async (request: any) => {
@@ -47,6 +49,7 @@ export function odataParse(options: Partial<ODataParseOptions> = {}): Middleware
           serviceRoot,
           entitySet: undefined, // Will be set by route handler or other middleware
           options: parsedOptions,
+          logger,
           runtime: {
             dataCache: new Map(),
           },
@@ -69,12 +72,13 @@ export function odataParse(options: Partial<ODataParseOptions> = {}): Middleware
         // The error middleware will handle the actual error
         const context: ODataMiddlewareContext = {
           model: opts.model as EdmModel,
-          serviceRoot: typeof opts.serviceRoot === "function" 
-            ? opts.serviceRoot(request.event) 
+          serviceRoot: typeof opts.serviceRoot === "function"
+            ? opts.serviceRoot(request.event)
             : opts.serviceRoot,
           entitySet: undefined,
           options: {},
           error: error as Error,
+          logger,
           runtime: {
             dataCache: new Map(),
           },

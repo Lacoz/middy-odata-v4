@@ -12,6 +12,7 @@ import { odataFunctions } from "./functions";
 import { odataMetadata } from "./metadata";
 import { odataConformance } from "./conformance";
 import { odataRouting } from "./routing";
+import { createODataLogger, deriveLogger } from "./logger";
 
 
 const DEFAULT_OPTIONS: ODataOptions = {
@@ -57,36 +58,34 @@ const DEFAULT_OPTIONS: ODataOptions = {
  * ```
  */
 export function odata(options: ODataOptions): MiddlewareObj {
-  console.log('[OData] Input options.routing:', JSON.stringify(options.routing, (key, value) => {
-    if (typeof value === 'function') {
-      return '[Function]';
-    }
-    return value;
-  }, 2));
-  
-  console.log('[OData] options.routing.dataProviders:', options.routing?.dataProviders);
-  console.log('[OData] typeof options.routing.dataProviders.Users:', typeof options.routing?.dataProviders?.Users);
-  
-  const opts = { 
-    ...DEFAULT_OPTIONS, 
+  const baseLogger = createODataLogger({
+    level: options.logLevel,
+    logger: options.logger,
+    prefix: "[OData]",
+  });
+
+  const opts = {
+    ...DEFAULT_OPTIONS,
     ...options,
     enable: {
       ...DEFAULT_OPTIONS.enable,
       ...options.enable
     },
-    routing: options.routing ? {
-      enableRouting: true,
-      strictMode: false,
-      ...options.routing,
-      dataProviders: {
-        ...options.routing.dataProviders
+    routing: options.routing
+      ? {
+        enableRouting: true,
+        strictMode: false,
+        ...options.routing,
+        dataProviders: {
+          ...options.routing.dataProviders,
+        },
+        logger:
+          options.routing.logger ?? deriveLogger(baseLogger, "[OData routing]"),
       }
-    } : undefined
+      : undefined,
+    logger: baseLogger,
+    logLevel: options.logLevel,
   };
-  
-  console.log('[OData] opts.routing.dataProviders:', opts.routing?.dataProviders);
-
-  console.log('[OData] Options:', JSON.stringify(opts, null, 2));
 
   // Build the middleware chain in the correct order
   const middlewares: MiddlewareObj[] = [];
@@ -98,6 +97,8 @@ export function odata(options: ODataOptions): MiddlewareObj {
       serviceRoot: opts.serviceRoot,
       validateAgainstModel: opts.parse?.validateAgainstModel ?? true,
       strictMode: opts.parse?.strictMode ?? false,
+      logger: baseLogger,
+      logLevel: opts.logLevel,
     }));
   }
 
@@ -108,6 +109,7 @@ export function odata(options: ODataOptions): MiddlewareObj {
       dataProviders: opts.routing?.dataProviders ?? {},
       enableRouting: opts.routing?.enableRouting ?? true,
       strictMode: opts.routing?.strictMode ?? false,
+      logger: opts.routing?.logger ?? deriveLogger(baseLogger, "[OData routing]"),
     }));
   }
 
@@ -176,17 +178,12 @@ export function odata(options: ODataOptions): MiddlewareObj {
   }
 
   // 9. Serialize middleware (last - formats response)
-  console.log('[OData] opts.enable?.serialize:', opts.enable?.serialize);
-  console.log('[OData] Serialize middleware enabled:', opts.enable?.serialize !== false);
   if (opts.enable?.serialize !== false) {
-    console.log('[OData] Adding serialize middleware');
     middlewares.push(odataSerialize({
       format: opts.serialize?.format ?? "json",
       includeMetadata: opts.serialize?.includeMetadata ?? true,
       prettyPrint: opts.serialize?.prettyPrint ?? false,
     }));
-  } else {
-    console.log('[OData] Serialize middleware disabled');
   }
 
   // 10. Error middleware (always last - handles errors)
