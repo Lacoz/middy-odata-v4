@@ -1,0 +1,21 @@
+{
+  "name": "odata-data-sources",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.mjs",
+  "scripts": {
+    "build": "tsc && cp index.ts dist/index.ts",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.679.0",
+    "@aws-sdk/lib-dynamodb": "^3.679.0",
+    "@middy/core": "^6.4.5",
+    "middy-odata-v4": "file:../../"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.130",
+    "@types/node": "^20.17.9",
+    "typescript": "^5.9.2"
+  }
+}

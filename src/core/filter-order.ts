@@ -454,6 +454,111 @@ function normalizeCollection(value: unknown): unknown[] | null {
   return null;
 }
 
+function padTwo(value: number): string {
+  return Math.abs(Math.trunc(value)).toString().padStart(2, "0");
+}
+
+function parseDateValue(value: unknown): Date | null {
+  if (value instanceof Date && !isNaN(value.getTime())) {
+    return value;
+  }
+
+  if (typeof value === "string" || typeof value === "number") {
+    const date = new Date(value);
+    if (!isNaN(date.getTime())) {
+      return date;
+    }
+  }
+
+  return null;
+}
+
+function formatDateOnly(value: unknown): string | null {
+  const date = parseDateValue(value);
+  if (!date) {
+    return null;
+  }
+
+  return date.toISOString().slice(0, 10);
+}
+
+function formatTimeOfDay(value: unknown): string | null {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    const timeMatch = trimmed.match(/^(-)?(\d{1,2}):(\d{2}):(\d{2})(\.\d+)?$/);
+    if (timeMatch) {
+      const [, sign, hours, minutes, seconds, fraction] = timeMatch;
+      const normalized = `${sign ?? ""}${padTwo(Number(hours))}:${padTwo(Number(minutes))}:${padTwo(Number(seconds))}${fraction ?? ""}`;
+      return normalized;
+    }
+  }
+
+  const date = parseDateValue(value);
+  if (!date) {
+    return null;
+  }
+
+  const iso = date.toISOString();
+  const isoMatch = iso.match(/T(\d{2}:\d{2}:\d{2})(\.\d+)?Z/);
+  if (!isoMatch) {
+    return null;
+  }
+
+  return `${isoMatch[1]}${isoMatch[2] ?? ""}`;
+}
+
+function parseTimeOrDuration(value: unknown): { totalSeconds: number; fractional: number } | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    const totalSeconds = value;
+    const fractional = totalSeconds - Math.trunc(totalSeconds);
+    return { totalSeconds, fractional };
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    const timeMatch = trimmed.match(/^(-)?(\d{1,2}):(\d{2}):(\d{2})(\.\d+)?$/);
+    if (timeMatch) {
+      const [, sign, hours, minutes, seconds, fraction] = timeMatch;
+      const signMultiplier = sign === "-" ? -1 : 1;
+      const baseSeconds =
+        Number(hours) * 3600 +
+        Number(minutes) * 60 +
+        Number(seconds) +
+        (fraction ? Number(fraction) : 0);
+      const totalSeconds = signMultiplier * baseSeconds;
+      const fractional = totalSeconds - Math.trunc(totalSeconds);
+      return { totalSeconds, fractional };
+    }
+
+    const durationMatch = trimmed.match(/^(-)?P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$/i);
+    if (durationMatch) {
+      const [, sign, days, hours, minutes, seconds] = durationMatch;
+      const signMultiplier = sign === "-" ? -1 : 1;
+      const daySeconds = days ? Number(days) * 86400 : 0;
+      const hourSeconds = hours ? Number(hours) * 3600 : 0;
+      const minuteSeconds = minutes ? Number(minutes) * 60 : 0;
+      const secondValue = seconds ? Number(seconds) : 0;
+      const totalBase = daySeconds + hourSeconds + minuteSeconds + secondValue;
+      const totalSeconds = signMultiplier * totalBase;
+      const fractional = totalSeconds - Math.trunc(totalSeconds);
+      return { totalSeconds, fractional };
+    }
+  }
+
+  const date = parseDateValue(value);
+  if (date) {
+    const totalSeconds =
+      date.getUTCHours() * 3600 +
+      date.getUTCMinutes() * 60 +
+      date.getUTCSeconds() +
+      date.getUTCMilliseconds() / 1000;
+    const fractional = totalSeconds - Math.trunc(totalSeconds);
+    return { totalSeconds, fractional };
+  }
+
+  return null;
+}
+
 function evaluateFunction(
   funcName: string,
   args: FilterExpression[],
@@ -461,7 +566,7 @@ function evaluateFunction(
   context: EvaluationContext
 ): any {
   const argValues = args.map(arg => evaluateExpression(arg, entity, context));
-  
+
   switch (funcName) {
     case 'contains':
       if (argValues.length >= 2) {
@@ -511,6 +616,18 @@ function evaluateFunction(
         return String(argValues[0] || '').trim();
       }
       return '';
+
+    case 'ltrim':
+      if (argValues.length >= 1) {
+        return String(argValues[0] || '').replace(/^\s+/, '');
+      }
+      return '';
+
+    case 'rtrim':
+      if (argValues.length >= 1) {
+        return String(argValues[0] || '').replace(/\s+$/, '');
+      }
+      return '';
     
     case 'substring':
       if (argValues.length >= 2) {
@@ -541,6 +658,14 @@ function evaluateFunction(
         return isNaN(date.getTime()) ? 0 : date.getFullYear();
       }
       return 0;
+
+    case 'date': {
+      if (argValues.length >= 1) {
+        const formatted = formatDateOnly(argValues[0]);
+        return formatted ?? '';
+      }
+      return '';
+    }
     
     case 'month':
       if (argValues.length >= 1) {
@@ -576,25 +701,83 @@ function evaluateFunction(
         return isNaN(date.getTime()) ? 0 : date.getSeconds();
       }
       return 0;
-    
+
+    case 'time': {
+      if (argValues.length >= 1) {
+        const formatted = formatTimeOfDay(argValues[0]);
+        return formatted ?? '';
+      }
+      return '';
+    }
+
+    case 'totalseconds': {
+      if (argValues.length >= 1) {
+        const parts = parseTimeOrDuration(argValues[0]);
+        return parts ? parts.totalSeconds : 0;
+      }
+      return 0;
+    }
+
+    case 'fractionalseconds': {
+      if (argValues.length >= 1) {
+        const parts = parseTimeOrDuration(argValues[0]);
+        return parts ? Math.abs(parts.fractional) : 0;
+      }
+      return 0;
+    }
+
     case 'round':
       if (argValues.length >= 1) {
         return Math.round(Number(argValues[0]) || 0);
       }
       return 0;
-    
+
     case 'floor':
       if (argValues.length >= 1) {
         return Math.floor(Number(argValues[0]) || 0);
       }
       return 0;
-    
+
     case 'ceiling':
       if (argValues.length >= 1) {
         return Math.ceil(Number(argValues[0]) || 0);
       }
       return 0;
-    
+
+    case 'abs':
+      if (argValues.length >= 1) {
+        const value = Number(argValues[0]);
+        return Number.isFinite(value) ? Math.abs(value) : 0;
+      }
+      return 0;
+
+    case 'sqrt':
+      if (argValues.length >= 1) {
+        const value = Number(argValues[0]);
+        return Number.isFinite(value) ? Math.sqrt(value) : 0;
+      }
+      return 0;
+
+    case 'power':
+      if (argValues.length >= 2) {
+        const base = Number(argValues[0]);
+        const exponent = Number(argValues[1]);
+        if (Number.isFinite(base) && Number.isFinite(exponent)) {
+          return Math.pow(base, exponent);
+        }
+      }
+      return 0;
+
+    case 'mod':
+      if (argValues.length >= 2) {
+        const dividend = Number(argValues[0]);
+        const divisor = Number(argValues[1]);
+        if (Number.isFinite(dividend) && Number.isFinite(divisor) && divisor !== 0) {
+          return dividend % divisor;
+        }
+      }
+      return 0;
+
     case 'now':
       return new Date().toISOString();
     

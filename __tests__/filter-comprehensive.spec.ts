@@ -45,6 +45,19 @@ describe("$filter - practical coverage", () => {
       expect(trimmed).toHaveLength(1);
     });
 
+    it("supports directional trim helpers", () => {
+      const values = [
+        { id: 1, label: "  padded" },
+        { id: 2, label: "padded  " },
+      ];
+
+      const leftTrimmed = filterArray(values, { filter: "ltrim(label) eq 'padded'" });
+      expect(leftTrimmed.map(v => v.id)).toEqual([1]);
+
+      const rightTrimmed = filterArray(values, { filter: "rtrim(label) eq 'padded'" });
+      expect(rightTrimmed.map(v => v.id)).toEqual([2]);
+    });
+
     it("supports concat", () => {
       const concatMatch = filterArray(PRODUCTS, { filter: "concat(name, 'X') eq 'AX'" });
       expect(concatMatch.map(p => p.name)).toEqual(["A"]);
@@ -73,6 +86,25 @@ describe("$filter - practical coverage", () => {
       const secondMatch = filterArray(dated, { filter: "second(createdAt) eq 30" });
       expect(secondMatch.map(d => d.id)).toEqual([2]);
     });
+
+    it("formats dates and times and exposes fractional parts", () => {
+      const records = [
+        { id: 1, createdAt: "2023-01-01T12:34:56.789Z", duration: "PT1H2M3.5S" },
+        { id: 2, createdAt: "2023-01-02T05:00:30Z", duration: "PT30M" },
+      ];
+
+      const dateMatch = filterArray(records, { filter: "date(createdAt) eq '2023-01-01'" });
+      expect(dateMatch.map(r => r.id)).toEqual([1]);
+
+      const timeMatch = filterArray(records, { filter: "time(createdAt) eq '12:34:56.789'" });
+      expect(timeMatch.map(r => r.id)).toEqual([1]);
+
+      const withTotalSeconds = filterArray(records, { filter: "totalseconds(duration) gt 3600" });
+      expect(withTotalSeconds.map(r => r.id)).toEqual([1]);
+
+      const fractionalSeconds = filterArray(records, { filter: "fractionalseconds(duration) gt 0.4" });
+      expect(fractionalSeconds.map(r => r.id)).toEqual([1]);
+    });
   });
 
   describe("mathematical helpers", () => {
@@ -85,6 +117,25 @@ describe("$filter - practical coverage", () => {
 
       const ceiling = filterArray(PRODUCTS, { filter: "ceiling(price) eq 12" });
       expect(ceiling.map(p => p.name)).toEqual(["C"]);
+    });
+
+    it("supports absolute, square root, power and modulo", () => {
+      const numbers = [
+        { id: 1, delta: -4, value: 16 },
+        { id: 2, delta: 2, value: 9 },
+      ];
+
+      const absolute = filterArray(numbers, { filter: "abs(delta) eq 4" });
+      expect(absolute.map(n => n.id)).toEqual([1]);
+
+      const squareRoot = filterArray(numbers, { filter: "sqrt(value) eq 4" });
+      expect(squareRoot.map(n => n.id)).toEqual([1]);
+
+      const powered = filterArray(PRODUCTS, { filter: "power(price, 2) gt 100" });
+      expect(powered.map(p => p.name)).toEqual(["A", "C"]);
+
+      const modulo = filterArray(PRODUCTS, { filter: "mod(price, 5) lt 1" });
+      expect(modulo.map(p => p.name)).toEqual(["A"]);
     });
   });
 
