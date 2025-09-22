@@ -27,6 +27,17 @@ An advanced example demonstrating:
 
 **Perfect for**: Production applications, complex data models, learning advanced features
 
+## Data Source Integration Example
+
+**Location**: `data-sources/`
+
+Scenarios demonstrated:
+- Wrapping a DynamoDB table that does not speak OData and projecting it through the middleware
+- Hydrating an entity set from a plain JSON HTTP service
+- Validating and forwarding query options to an upstream OData-compliant API
+
+**Perfect for**: Real back-end integrations, bridging legacy APIs, understanding how to reuse parsed query options
+
 ## Getting Started
 
 1. Choose an example that matches your needs
@@ -37,19 +48,19 @@ An advanced example demonstrating:
 
 ## Example Comparison
 
-| Feature | Simple | Complex |
-|---------|--------|---------|
-| Entity Types | 1 (Users) | 5 (Products, Categories, Suppliers, Orders, OrderItems) |
-| Navigation Properties | None | Multiple relationships |
-| Filtering | Basic string matching | Advanced expressions |
-| Expansion | Not implemented | Full $expand support |
-| Routing | Single endpoint | Multi-entity routing |
-| Business Logic | Minimal | Real-world scenarios |
-| Use Case | Learning, simple APIs | Production, complex systems |
+| Feature | Simple | Complex | Data Sources |
+|---------|--------|---------|--------------|
+| Entity Types | 1 (Users) | 5 (Products, Categories, Suppliers, Orders, OrderItems) | 2 (Users, Products) |
+| Navigation Properties | None | Multiple relationships | Optional (handled upstream) |
+| Filtering | Basic string matching | Advanced expressions | Middleware-driven after fetch |
+| Expansion | Not implemented | Full $expand support | Pass-through via proxy example |
+| Routing | Single endpoint | Multi-entity routing | Data providers per upstream |
+| Business Logic | Minimal | Real-world scenarios | Mapping from external payloads |
+| Use Case | Learning, simple APIs | Production, complex systems | Integrating databases and HTTP services |
 
 ## Common Patterns
 
-Both examples demonstrate these common patterns:
+All examples demonstrate these common patterns:
 
 - **EDM Model Definition**: How to define your data model
 - **Middleware Configuration**: Setting up the OData middleware
@@ -57,6 +68,7 @@ Both examples demonstrate these common patterns:
 - **Response Formatting**: Returning OData-compliant responses
 - **Error Handling**: Proper error responses
 - **TypeScript Integration**: Full type safety
+- **External Data Integration**: Mapping data sources that are not OData-aware
 
 ## Next Steps
 

@@ -62,27 +62,22 @@ This document identifies missing OData v4.01 features and test coverage gaps in 
 
 ### 2.2 String Functions
 - **Status**: ⚠️ **PARTIALLY IMPLEMENTED**
-- **Shipped**: `contains`, `startswith`, `endswith`, `length`, `indexof`, `substring`, `tolower`, `toupper`, `trim`, `concat`
-- **Missing Features**:
-  - `ltrim()` and `rtrim()` helpers
+- **Shipped**: `contains`, `startswith`, `endswith`, `length`, `indexof`, `substring`, `tolower`, `toupper`, `trim`, `ltrim`, `rtrim`, `concat`
+- **Remaining Enhancements**:
   - Culture-aware comparisons and collation controls
 
 ### 2.3 Date/Time Functions
 - **Status**: ⚠️ **PARTIALLY IMPLEMENTED**
-- **Shipped**: `year`, `month`, `day`, `hour`, `minute`, `second`, `now`, `maxdatetime`, `mindatetime`
-- **Missing Features**:
-  - `date()` and `time()` projections
-  - `totalseconds()` helper
-  - `fractionalseconds()` helper
+- **Shipped**: `year`, `month`, `day`, `hour`, `minute`, `second`, `date`, `time`, `totalseconds`, `fractionalseconds`, `now`, `maxdatetime`, `mindatetime`
+- **Remaining Enhancements**:
+  - Time zone awareness and offset helpers
+  - Calendar-specific calculations (week numbers, quarters)
 
 ### 2.4 Mathematical Functions
 - **Status**: ⚠️ **PARTIALLY IMPLEMENTED**
-- **Shipped**: `round`, `floor`, `ceiling`
-- **Missing Features**:
-  - `abs()` function
-  - `sqrt()` function
-  - `power()` function
-  - `mod()` function
+- **Shipped**: `round`, `floor`, `ceiling`, `abs`, `sqrt`, `power`, `mod`
+- **Remaining Enhancements**:
+  - Advanced math helpers (trigonometric/logarithmic functions)
 
 ### 2.5 Type Functions
 - **Status**: ❌ **NOT IMPLEMENTED**

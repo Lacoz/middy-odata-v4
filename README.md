@@ -420,6 +420,7 @@ const middleware = odata({
 
 - **[Simple Example](examples/simple/)** - Basic user management API
 - **[Complex Example](examples/complex/)** - E-commerce system with multiple entities
+- **[Data Source Integrations](examples/data-sources/)** - DynamoDB, REST and upstream OData bridging
 
 ## Implementation Status
 
