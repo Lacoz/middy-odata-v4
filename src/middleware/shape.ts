@@ -432,7 +432,12 @@ async function loadEntitySetFromProvider(
 
   const deadline = context.metadata?.deadline;
   const result = await executeWithDeadline(async () => {
-    const provided = await provider();
+    const provided = provider.length > 0
+      ? await (provider as (ctx: ODataMiddlewareContext) => Promise<unknown> | unknown)(context)
+      : await (provider as () => Promise<unknown> | unknown)();
+    if (provided === undefined || provided === null) {
+      return [];
+    }
     return Array.isArray(provided) ? provided : [provided];
   }, deadline, `entity set '${entitySetName}'`);
 

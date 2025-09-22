@@ -1,6 +1,11 @@
 import type { MiddlewareObj } from "@middy/core";
 import type { EdmModel, ODataQueryOptions } from "../core/types";
 
+export type ODataDataProviderResult = unknown | unknown[];
+export type ODataDataProvider =
+  | ((context: ODataMiddlewareContext) => Promise<ODataDataProviderResult> | ODataDataProviderResult)
+  | (() => Promise<ODataDataProviderResult> | ODataDataProviderResult);
+
 // Base middleware context that all OData middlewares will use
 export interface ODataMiddlewareContext {
   model: EdmModel;
@@ -8,7 +13,7 @@ export interface ODataMiddlewareContext {
   entitySet?: string;
   entityType?: string;
   options: ODataQueryOptions;
-  dataProviders?: Record<string, () => Promise<unknown[]> | unknown[]>;
+  dataProviders?: Record<string, ODataDataProvider>;
   // Additional context for middleware communication
   data?: unknown;
   response?: unknown;
@@ -111,7 +116,7 @@ export interface ODataConformanceOptions {
 
 export interface ODataRoutingOptions {
   model: EdmModel;
-  dataProviders?: Record<string, () => Promise<unknown[]> | unknown[]>;
+  dataProviders?: Record<string, ODataDataProvider>;
   enableRouting?: boolean;
   strictMode?: boolean;
   [key: string]: unknown;

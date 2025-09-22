@@ -49,6 +49,41 @@ describe("routing + shape middleware integration", () => {
     expect(productsProvider).toHaveBeenCalledTimes(1);
   });
 
+  it("passes parsed query options to contextual data providers", async () => {
+    const request: any = {
+      event: {
+        path: "/Products",
+        rawQueryString: "$top=1&$filter=price gt 10",
+      },
+      context: {
+        getRemainingTimeInMillis: () => 1000,
+      },
+      internal: {},
+    };
+
+    const parseMw = odataParse({ model: EDM_MODEL, serviceRoot: "https://example.test" });
+    await parseMw.before?.(request);
+
+    const provider = vi.fn(async (ctx) => {
+      expect(ctx.entitySet).toBe("Products");
+      expect(ctx.options.top).toBe(1);
+      expect(ctx.options.filter).toBe("price gt 10");
+      expect(ctx.serviceRoot).toBe("https://example.test");
+      return PRODUCTS;
+    });
+
+    const routingMw = odataRouting({
+      model: EDM_MODEL,
+      dataProviders: {
+        Products: provider,
+      },
+    });
+
+    await routingMw.after?.(request);
+
+    expect(provider).toHaveBeenCalledTimes(1);
+  });
+
   it("supports nested expand options with chained data providers", async () => {
     const PRODUCTS_FIXTURE = [
       { id: 1, name: "Laptop", categoryId: 100 },

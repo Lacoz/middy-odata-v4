@@ -27,6 +27,18 @@ An advanced example demonstrating:
 
 **Perfect for**: Production applications, complex data models, learning advanced features
 
+## Data Sources Example
+
+**Location**: `data-sources/`
+
+Demonstrates how to mix multiple backends behind the same OData surface:
+- DynamoDB-backed entity set with `$filter`/`$top` hints pushed into Scan
+- Plain REST/JSON service that relies on the middleware for shaping & filtering
+- Upstream OData HTTP service where query options are forwarded verbatim
+- Local runner that simulates API Gateway for quick demos
+
+**Perfect for**: Integration-heavy workloads, progressive migration to OData, showcasing optimisation hooks
+
 ## Getting Started
 
 1. Choose an example that matches your needs
@@ -37,15 +49,17 @@ An advanced example demonstrating:
 
 ## Example Comparison
 
-| Feature | Simple | Complex |
-|---------|--------|---------|
-| Entity Types | 1 (Users) | 5 (Products, Categories, Suppliers, Orders, OrderItems) |
-| Navigation Properties | None | Multiple relationships |
-| Filtering | Basic string matching | Advanced expressions |
-| Expansion | Not implemented | Full $expand support |
-| Routing | Single endpoint | Multi-entity routing |
-| Business Logic | Minimal | Real-world scenarios |
-| Use Case | Learning, simple APIs | Production, complex systems |
+| Feature | Simple | Data Sources | Complex |
+|---------|--------|--------------|---------|
+| Entity Types | 1 (Users) | 3 (Users, Tasks, RemoteProducts) | 5 (Products, Categories, Suppliers, Orders, OrderItems) |
+| Navigation Properties | None | None (focus on sourcing) | Multiple relationships |
+| Filtering | Basic string matching | DynamoDB filter push-down + middleware filtering | Advanced expressions |
+| Expansion | Not implemented | Not showcased | Full $expand support |
+| Routing | Single endpoint | Multi-entity routing with contextual providers | Multi-entity routing |
+| Business Logic | Minimal | Integration-focused | Real-world scenarios |
+| External Services | None | DynamoDB + HTTP + OData service | In-memory fixtures |
+| Local Tooling | Basic logs | Local runner + fixtures | Build & deploy scripts |
+| Use Case | Learning, simple APIs | Data federation, integration demos | Production, complex systems |
 
 ## Common Patterns
 

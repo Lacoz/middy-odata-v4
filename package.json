@@ -21,9 +21,14 @@
   "scripts": {
     "build": "vite build",
     "test": "vitest run",
+    "coverage": "vitest run --coverage",
     "dev": "vitest",
     "typecheck": "tsc -p tsconfig.json",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "pnpm lint && pnpm typecheck && pnpm test",
     "publish:manual": "pnpm build && pnpm publish"
   },
   "packageManager": "pnpm@10.15.1",
