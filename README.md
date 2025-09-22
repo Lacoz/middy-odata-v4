@@ -413,12 +413,52 @@ const middleware = odata({
 
 ⚠️ **Minimal Implementation** (disabled by default):
 - `$search` - Basic structure only
-- `$compute` - Basic structure only  
+- `$compute` - Basic structure only
 - `$apply` - Basic structure only
+
+## Developer Experience & Tooling
+
+- `pnpm check` runs linting, type-checking, and the full test suite in one command.
+- `pnpm coverage` executes the vitest runner with V8 coverage reports enabled.
+- `pnpm format`/`pnpm format:check` apply or verify Prettier formatting, and `pnpm lint:fix` auto-fixes ESLint violations.
+- `pnpm dev` keeps vitest in watch mode for fast TDD feedback while working on the middleware.
+
+### Context-aware data providers
+
+The routing middleware now hands each data provider the current `ODataMiddlewareContext`, so backends can inspect parsed query options before loading data:
+
+```ts
+const handler = middy(baseHandler).use(odata({
+  model,
+  serviceRoot,
+  routing: {
+    dataProviders: {
+      Users: async (context) => {
+        const scanInput = translateFilterToDynamo(context.options.filter);
+        const results = await docClient.send(new ScanCommand(scanInput));
+        return results.Items ?? [];
+      },
+      RemoteProducts: async (context) => {
+        const upstream = buildQueryFromOptions(context.options);
+        const response = await fetch(`${ODATA_SERVICE}/Products?${upstream}`);
+        const payload = await response.json();
+        return Array.isArray(payload.value) ? payload.value : payload;
+      },
+    },
+  },
+}));
+```
+
+This unlocks backends that can push filtering/pagination to DynamoDB, reuse existing REST endpoints, or proxy full OData services with minimal glue.
+
+### Data-source federation demo
+
+See the **[Data Sources Example](examples/data-sources/)** for a full Lambda handler that combines DynamoDB, a JSON placeholder API, and the public OData demo service. Running `pnpm run local` inside that example simulates API Gateway events and prints OData responses so you can verify the end-to-end flow without deploying infrastructure.
 
 ## Examples
 
 - **[Simple Example](examples/simple/)** - Basic user management API
+- **[Data Sources Example](examples/data-sources/)** - DynamoDB + REST + remote OData federation
 - **[Complex Example](examples/complex/)** - E-commerce system with multiple entities
 
 ## Implementation Status
@@ -436,6 +476,14 @@ const middleware = odata({
 - **Advanced Features**: Implement $search, $compute, $apply
 - **Testing**: Enhance test coverage for advanced features
 - **Documentation**: Update examples to reflect actual capabilities
+
+## Roadmap: Expanding OData 4.01 coverage
+
+- **Advanced query options** – Deepen `$search`, `$compute`, and `$apply` support with scoring profiles, additional math/date helpers, and end-to-end pipeline parsing.
+- **Type system enhancements** – Add vocabulary annotations, complex/enum/type definitions, and richer metadata generation so EDM models can mirror enterprise schemas.
+- **Protocol features** – Implement conditional requests (If-Match/If-None-Match), PATCH/delta semantics, and batch processing to satisfy more conformance profiles.
+- **Error handling & throttling** – Extend the error mapper to cover additional HTTP status codes (409, 415, 422, 429, etc.) and provide consistent retry hints.
+- **Function/action parity** – Support overload resolution, complex parameter shapes, and richer return types for reusable operations.
 
 ## References
 

@@ -30,6 +30,8 @@ export { composeMiddlewares } from "./middleware/compose";
 export type {
   ODataOptions,
   ODataMiddlewareContext,
+  ODataDataProvider,
+  ODataDataProviderResult,
   ODataParseOptions,
   ODataRoutingOptions,
   ODataShapeOptions,

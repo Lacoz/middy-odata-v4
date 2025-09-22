@@ -1,10 +1,11 @@
 import type { MiddlewareObj } from "@middy/core";
 import type { EdmModel } from "../core/types";
 import { mergeMiddlewareOptions, getMiddlewareContext, setMiddlewareContext } from "./compose";
+import type { ODataDataProvider, ODataMiddlewareContext } from "./types";
 
 export interface ODataRoutingOptions {
   model: EdmModel;
-  dataProviders?: Record<string, () => Promise<unknown[]> | unknown[]>;
+  dataProviders?: Record<string, ODataDataProvider>;
   enableRouting?: boolean;
   strictMode?: boolean;
   [key: string]: unknown;
@@ -33,7 +34,7 @@ export function odataRouting(options: Partial<ODataRoutingOptions> = {}): Middle
     after: async (request: any) => {
       try {
         const context = getMiddlewareContext(request);
-        
+
         if (!context) {
           return;
         }
@@ -66,7 +67,7 @@ export function odataRouting(options: Partial<ODataRoutingOptions> = {}): Middle
           context.entityType = resolveEntityTypeForSet(entitySetName, opts.model as EdmModel);
           
           // Get data from data provider
-          const data = await getEntitySetData(entitySetName, opts as ODataRoutingOptions);
+          const data = await getEntitySetData(entitySetName, opts as ODataRoutingOptions, context);
           console.log('[OData Routing] Got data for', entitySetName, ':', data?.length, 'items');
           
           if (data !== undefined) {
@@ -146,16 +147,45 @@ function extractEntitySetName(path: string, model: EdmModel): string | null {
 /**
  * Get data for an entity set from configured data providers
  */
-async function getEntitySetData(entitySetName: string, options: ODataRoutingOptions): Promise<unknown[] | undefined> {
+async function getEntitySetData(
+  entitySetName: string,
+  options: ODataRoutingOptions,
+  context: ODataMiddlewareContext
+): Promise<unknown[] | undefined> {
   const { dataProviders } = options;
-  
+
   if (dataProviders && dataProviders[entitySetName]) {
     const dataProvider = dataProviders[entitySetName];
-    const data = await dataProvider();
-    return Array.isArray(data) ? data : [data];
+    const data = await executeDataProvider(dataProvider, context);
+    return normalizeProviderResult(data);
   }
-  
+
   return undefined;
+}
+
+async function executeDataProvider(
+  provider: ODataDataProvider,
+  context: ODataMiddlewareContext
+): Promise<unknown> {
+  if (provider.length > 0) {
+    const contextualProvider = provider as (ctx: ODataMiddlewareContext) => Promise<unknown> | unknown;
+    return contextualProvider(context);
+  }
+
+  const noArgProvider = provider as () => Promise<unknown> | unknown;
+  return noArgProvider();
+}
+
+function normalizeProviderResult(value: unknown): unknown[] {
+  if (value === undefined || value === null) {
+    return [];
+  }
+
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  return [value];
 }
 
 function resolveEntityTypeForSet(entitySetName: string, model: EdmModel): string | undefined {
