@@ -27,6 +27,38 @@ An advanced example demonstrating:
 
 **Perfect for**: Production applications, complex data models, learning advanced features
 
+## DynamoDB Data Provider
+
+**Location**: `dynamodb/`
+
+Demonstrates routing directly against a DynamoDB table using the AWS SDK v3 document client.
+
+- One command (`pnpm run bootstrap`) to create and seed the table
+- Local invocation script for repeatable smoke tests
+- Shows how to enable pagination, filtering, and metadata for document data
+- Environment-driven configuration so you can target DynamoDB Local, LocalStack, or AWS
+
+## SQLite Catalog Example
+
+**Location**: `sqlite/`
+
+Uses a lightweight SQLite database generated from a TypeScript script to power a product catalog with navigation properties.
+
+- Bootstrap script builds the `.db` file on demand (no binaries in git)
+- Demonstrates `$expand`, `$select`, and navigation bindings between `Products` and `Categories`
+- Highlights the shape middleware with relational data
+
+## HTTP Data Provider Bridge
+
+**Location**: `http-providers/`
+
+Proxies two public services – the TripPin OData sample service and JSONPlaceholder REST API – through a single OData endpoint.
+
+- Fetches upstream OData JSON and plain REST responses
+- Normalizes payloads into your EDM model
+- Provides a demo script that invokes `/People` and `/Todos` with query options
+- Great starting point for façade APIs that combine multiple sources
+
 ## Getting Started
 
 1. Choose an example that matches your needs
@@ -37,15 +69,16 @@ An advanced example demonstrating:
 
 ## Example Comparison
 
-| Feature | Simple | Complex |
-|---------|--------|---------|
-| Entity Types | 1 (Users) | 5 (Products, Categories, Suppliers, Orders, OrderItems) |
-| Navigation Properties | None | Multiple relationships |
-| Filtering | Basic string matching | Advanced expressions |
-| Expansion | Not implemented | Full $expand support |
-| Routing | Single endpoint | Multi-entity routing |
-| Business Logic | Minimal | Real-world scenarios |
-| Use Case | Learning, simple APIs | Production, complex systems |
+| Feature | Simple | Complex | DynamoDB | SQLite | HTTP Providers |
+|---------|--------|---------|----------|--------|----------------|
+| Entity Types | 1 (Users) | 5 (Products, Categories, Suppliers, Orders, OrderItems) | 1 (User) | 2 (Products, Categories) | 2 (People, Todos) |
+| Data Source | In-memory array | In-memory relational graph | DynamoDB table | SQLite database | Public HTTP APIs |
+| Navigation Properties | None | Multiple relationships | None | Products ↔ Categories | None |
+| Filtering | Basic string matching | Advanced expressions | Document scan + OData filter | SQL-backed filters | Remote payload filtering |
+| Expansion | Not implemented | Full $expand support | Not applicable | `$expand=Category` | Not applicable |
+| Routing | Single endpoint | Multi-entity routing | Auto entity set routing | Auto entity set routing | Auto entity set routing |
+| Business Logic | Minimal | Real-world scenarios | Document-to-EDM mapping | SQL query translation | HTTP response normalization |
+| Use Case | Learning, simple APIs | Production, complex systems | Serverless with DynamoDB | Local prototyping & relational data | API façade / aggregation |
 
 ## Common Patterns
 

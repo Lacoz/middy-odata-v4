@@ -1,0 +1,21 @@
+{
+  "name": "middy-odata-sqlite-example",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "create-db": "tsx scripts/create-db.ts",
+    "demo": "tsx scripts/demo.ts"
+  },
+  "dependencies": {
+    "@middy/core": "^6.4.5",
+    "better-sqlite3": "^9.6.0",
+    "middy-odata-v4": "file:../../"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.145",
+    "@types/better-sqlite3": "^7.6.9",
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.2"
+  }
+}

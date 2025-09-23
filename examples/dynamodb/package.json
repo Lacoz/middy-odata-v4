@@ -1,0 +1,21 @@
+{
+  "name": "middy-odata-dynamodb-example",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "bootstrap": "tsx scripts/bootstrap-table.ts",
+    "demo": "tsx scripts/invoke.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.687.0",
+    "@aws-sdk/lib-dynamodb": "^3.687.0",
+    "@middy/core": "^6.4.5",
+    "middy-odata-v4": "file:../../"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.145",
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.2"
+  }
+}

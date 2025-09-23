@@ -418,8 +418,11 @@ const middleware = odata({
 
 ## Examples
 
-- **[Simple Example](examples/simple/)** - Basic user management API
-- **[Complex Example](examples/complex/)** - E-commerce system with multiple entities
+- **[Simple Example](examples/simple/)** – Basic user management API
+- **[Complex Example](examples/complex/)** – E-commerce system with multiple entities
+- **[DynamoDB Data Provider](examples/dynamodb/)** – Shows how to use the routing helpers with AWS DynamoDB including bootstrap and local invocation scripts
+- **[SQLite Catalog](examples/sqlite/)** – Demonstrates `$expand` and relational navigation backed by a generated SQLite database
+- **[HTTP Provider Bridge](examples/http-providers/)** – Wraps existing OData and REST APIs and normalizes them into a single service
 
 ## Implementation Status
 
